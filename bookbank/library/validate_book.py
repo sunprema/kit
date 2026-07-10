@@ -36,9 +36,31 @@ Exits 0 if every book passes, 1 if any check fails.
 """
 import argparse
 import json
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
+
+
+def default_root():
+    """$BOOKBANK_ROOT, else cwd if it looks like a content-repo clone (has
+    books/, catalog.json, or a sunprema/books-ish git remote), else ~/bookbank.
+    Same cascade as build-library.py's --root default."""
+    if os.environ.get("BOOKBANK_ROOT"):
+        return Path(os.environ["BOOKBANK_ROOT"])
+    cwd = Path.cwd()
+    repo_hint = os.environ.get("BOOKBANK_BOOKS_REPO", "sunprema/books")
+    if (cwd / "books").is_dir() or (cwd / "catalog.json").is_file():
+        return cwd
+    try:
+        remotes = subprocess.run(["git", "remote", "-v"], cwd=cwd,
+                                  capture_output=True, text=True, timeout=3).stdout
+        if repo_hint in remotes:
+            return cwd
+    except Exception:
+        pass
+    return Path.home() / "bookbank"
 
 
 class Finding:
@@ -284,6 +306,11 @@ def main():
     if args.root:
         only = set(args.only.split(",")) if args.only else None
         targets += discover_books(args.root, only)
+    elif not targets:
+        # No explicit dir(s) and no --root: sweep the same default root
+        # build-library.py uses (cwd content-repo clone, else ~/bookbank).
+        only = set(args.only.split(",")) if args.only else None
+        targets += discover_books(default_root(), only)
 
     if not targets:
         ap.error("no book directories given — pass one or more paths, or --root")

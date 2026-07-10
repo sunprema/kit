@@ -12,7 +12,7 @@ VALIDATOR="${CLAUDE_PLUGIN_ROOT:-$HERE}/library/validate_book.py"
 payload="$(cat)"
 
 book_dir="$(BOOKBANK_ROOT="${BOOKBANK_ROOT:-}" python3 -c '
-import json, os, sys
+import json, os, subprocess, sys
 
 payload = json.load(sys.stdin)
 ti = payload.get("tool_input") or {}
@@ -20,7 +20,20 @@ file_path = ti.get("file_path") or (payload.get("tool_response") or {}).get("fil
 if not file_path:
     sys.exit(0)
 
-root = os.environ.get("BOOKBANK_ROOT") or os.path.expanduser("~/bookbank")
+# Same cascade as write-book/build-library.py/validate_book.py: $BOOKBANK_ROOT,
+# else cwd if it looks like a content-repo clone, else ~/bookbank.
+root = os.environ.get("BOOKBANK_ROOT")
+if not root:
+    cwd = os.getcwd()
+    repo_hint = os.environ.get("BOOKBANK_BOOKS_REPO", "sunprema/books")
+    looks_like_clone = os.path.isdir(os.path.join(cwd, "books")) or os.path.isfile(os.path.join(cwd, "catalog.json"))
+    if not looks_like_clone:
+        try:
+            r = subprocess.run(["git", "remote", "-v"], cwd=cwd, capture_output=True, text=True, timeout=3)
+            looks_like_clone = repo_hint in r.stdout
+        except Exception:
+            pass
+    root = cwd if looks_like_clone else os.path.expanduser("~/bookbank")
 books_root = os.path.normpath(os.path.join(root, "books"))
 p = os.path.normpath(file_path)
 

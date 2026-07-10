@@ -54,7 +54,14 @@ those are a guided-mode plan awaiting the author's approval.
 
 ## Where things live
 
-- **Data root = `$BOOKBANK_ROOT` or `~/bookbank`.**
+- **Data root — first match wins:**
+  1. `$BOOKBANK_ROOT`, if set.
+  2. The current directory, if it **looks like a content-repo clone** — it has
+     a `books/` directory, a `catalog.json`, or a git remote whose URL
+     contains `sunprema/books` (or `$BOOKBANK_BOOKS_REPO`, if set). This is
+     what makes "clone the content repo, run the skill" just work with no
+     flags or env vars.
+  3. `~/bookbank`, as a legacy fallback (the pre-plugin flat layout).
 - **Books:** one folder per book under `<root>/books/<book-id>/`:
   ```
   <root>/books/rust-programming/
@@ -68,11 +75,20 @@ those are a guided-mode plan awaiting the author's approval.
     assets/img/*              # images downloaded/created at build time (offline)
     cover.png                 # optional: a generated cover the gallery shows
   ```
-- **Personas:** `<root>/personas/<id>.json` = `{ "name", "tagline", "voice" }`.
-  `book.json`'s `persona` is the persona **id** (filename without `.json`), or
-  absent for the default voice.
-- **Themes:** `<root>/themes/<id>.json` = the book's **look & feel** (palette,
-  fonts, background). `book.json`'s `theme` is the theme **id**, or absent for a
+- **Personas & themes — a 3-tier override cascade, first match wins:**
+  1. `<root>/personas|themes/<id>.json` — per-clone local override. Never
+     published: `build-library.py`'s sync only touches `<root>/books/*`, so
+     this is safe for a one-off local experiment.
+  2. `~/.claude/bookbank/personas|themes/<id>.json` — per-user override, for a
+     voice/look you want available across every book you write, regardless of
+     which content-repo clone you're standing in.
+  3. `${CLAUDE_PLUGIN_ROOT}/defaults/personas|themes/<id>.json` — the plugin's
+     built-in personas/themes.
+
+  A **persona** is `{ "name", "tagline", "voice" }`; `book.json`'s `persona`
+  is the persona **id** (filename without `.json`), or absent for the default
+  voice. A **theme** is the book's **look & feel** (palette, fonts,
+  background); `book.json`'s `theme` is the theme **id**, or absent for a
   neutral house look. A theme is **tokens + a mood** — see **Design** below.
 
 ## book.json schema
@@ -96,13 +112,21 @@ those are a guided-mode plan awaiting the author's approval.
       "source": "claude"
     }
   ],
-  "revisionNotes": "Add a section on async/await; the clone example on the ownership page is wrong"
+  "revisionNotes": "Add a section on async/await; the clone example on the ownership page is wrong",
+  "notes": "Requester wants a strong section comparing this to Python's GIL"
 }
 ```
 
 `revisionNotes` is only present while `status` is `"revising"` — it's the
 freeform ask for that one regenerate pass (see **Revising an existing book**
 below). Clear it once applied.
+
+`notes` is an optional field valid while `status` is `"requested"` — extra
+freeform brief context for the *initial* build pass (the same idea as
+`revisionNotes`, but for a book that hasn't been built yet). Treat it as
+additional brief alongside `topic`/seed `concepts[]` when you research and
+choose concepts — e.g. `create-book-from-issue` writes an issue's free-text
+"notes" answer here. Clear it once the book reaches `"ready"`.
 
 Field rules:
 
@@ -117,16 +141,21 @@ Field rules:
 - Preserve `id`, `title`, `topic`, `persona`, `theme` exactly as the app wrote them.
 - `theme`: the look-&-feel id under `<root>/themes/`, or absent = neutral house
   look. It's a durable request field like `persona` — never drop it on a rebuild.
+- `notes`: optional, only meaningful while `status` is `"requested"` — see
+  the schema note above. Remove it once the book is `"ready"`.
 
 ## Procedure (building a book)
 
-1. **Read `book.json`.** Note the topic, the persona id, and any seed concepts the
-   user already listed (`source: "user"` — these are required).
-2. **Load the persona** from `<root>/personas/<id>.json` and write in that `voice`.
-   The persona governs **voice only** — tone, analogies, how concepts are
-   explained. If `persona` is absent, use a clear, friendly technical author.
-   **Load the theme** from `<root>/themes/<id>.json` — it governs **look only**
-   (palette, fonts, background). If `theme` is absent, use a neutral house look.
+1. **Read `book.json`.** Note the topic, the persona id, any seed concepts the
+   user already listed (`source: "user"` — these are required), and any
+   `notes` (extra freeform brief context — fold it into your research and
+   concept choices like an inline ask).
+2. **Load the persona** by resolving its id through the 3-tier cascade above
+   and write in that `voice`. The persona governs **voice only** — tone,
+   analogies, how concepts are explained. If `persona` is absent, use a
+   clear, friendly technical author. **Load the theme** the same way — it
+   governs **look only** (palette, fonts, background). If `theme` is absent,
+   use a neutral house look.
 3. **Research the web.** Use WebSearch + WebFetch to get the topic _right_: current
    facts, idioms, version-accurate syntax, authoritative sources (official docs,
    reference material). Don't invent APIs or numbers. Prefer primary sources.
@@ -645,10 +674,10 @@ if the bundle exists, `FORCE=1` to rebuild), and writes to the right path:
 
 ```bash
 # Default (three + OrbitControls):
-.claude/skills/write-book/scripts/build-three-bundle.sh "$BOOKBANK_ROOT/books/<book-id>"
+"$CLAUDE_PLUGIN_ROOT/skills/write-book/scripts/build-three-bundle.sh" "<book-dir>"
 
 # Extra addons — each as Name=import-spec:
-.claude/skills/write-book/scripts/build-three-bundle.sh "$BOOKBANK_ROOT/books/<book-id>" \
+"$CLAUDE_PLUGIN_ROOT/skills/write-book/scripts/build-three-bundle.sh" "<book-dir>" \
   OrbitControls=three/addons/controls/OrbitControls.js \
   GLTFLoader=three/addons/loaders/GLTFLoader.js
 # Pin a version with THREE_VERSION=0.185.1, force a rebuild with FORCE=1.

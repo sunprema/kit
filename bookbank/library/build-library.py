@@ -18,7 +18,8 @@ same fallback idea the native app's gallery uses, so the shelf looks whole.
 Usage:
   build-library.py --out <repo-dir> [--root <bookbank-root>] [--only id1,id2]
 
-  --root   BookBank data root (default: $BOOKBANK_ROOT or ~/bookbank)
+  --root   BookBank data root (default: $BOOKBANK_ROOT, else cwd if it looks
+           like a content-repo clone, else ~/bookbank — see default_root())
   --out    output site dir (a clone of the books repo). Required.
   --only   comma-separated book ids to publish (default: every "ready" book).
            Books not listed but already present in <out>/books are KEPT and
@@ -51,6 +52,25 @@ def default_site_url(repo):
     """Derive the GitHub Pages URL for an "owner/name" repo slug."""
     owner, _, name = repo.partition("/")
     return f"https://{owner}.github.io/{name}" if name else f"https://{owner}.github.io"
+
+
+def default_root():
+    """$BOOKBANK_ROOT, else cwd if it looks like a content-repo clone (has
+    books/, catalog.json, or a sunprema/books-ish git remote), else ~/bookbank."""
+    if os.environ.get("BOOKBANK_ROOT"):
+        return os.environ["BOOKBANK_ROOT"]
+    cwd = Path.cwd()
+    repo_hint = os.environ.get("BOOKBANK_BOOKS_REPO", DEFAULT_REPO)
+    if (cwd / "books").is_dir() or (cwd / "catalog.json").is_file():
+        return str(cwd)
+    try:
+        remotes = subprocess.run(["git", "remote", "-v"], cwd=cwd,
+                                  capture_output=True, text=True, timeout=3).stdout
+        if repo_hint in remotes:
+            return str(cwd)
+    except Exception:
+        pass
+    return str(Path.home() / "bookbank")
 
 # Curated gradient pairs; a book with no cover art gets one deterministically by
 # hashing its id, so the same book always lands on the same palette.
@@ -557,8 +577,7 @@ do not hand-edit them; re-run the publisher instead.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
-    ap.add_argument("--root", default=os.environ.get("BOOKBANK_ROOT")
-                    or str(Path.home() / "bookbank"))
+    ap.add_argument("--root", default=default_root())
     ap.add_argument("--only", default="")
     ap.add_argument("--repo",
                     default=os.environ.get("BOOKBANK_BOOKS_REPO") or DEFAULT_REPO,

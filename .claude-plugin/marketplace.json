@@ -1,5 +1,6 @@
 {
   "name": "kit",
+  "description": "Sundar Nambuvel's Claude Code plugin marketplace — BookBank authoring tools and future tools, one plugin per sibling directory.",
   "owner": {
     "name": "Sundar Nambuvel"
   },

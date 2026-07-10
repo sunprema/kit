@@ -36,16 +36,17 @@ BASE="${BOOKBANK_SITE_URL:-https://${REPO%%/*}.github.io/${REPO#*/}}"
 
 ## The one thing that does the work
 
-`library/build-library.py` in the BookBank project. It syncs books and generates
+`${CLAUDE_PLUGIN_ROOT}/library/build-library.py`. It syncs books and generates
 the whole front door — you do **not** hand-write `index.html`:
 
 ```
-python3 library/build-library.py --out <clone-dir> [--root <bookbank-root>] [--only id1,id2]
+python3 "$CLAUDE_PLUGIN_ROOT/library/build-library.py" --out <clone-dir> [--root <bookbank-root>] [--only id1,id2]
 ```
 
 - `--out`   a clone of the target repo (required).
 - `--repo`  target repo as `owner/name` (default `$BOOKBANK_BOOKS_REPO` or `sunprema/books`).
-- `--root`  BookBank data root (default `$BOOKBANK_ROOT` or `~/bookbank`).
+- `--root`  BookBank data root — same cascade as `write-book`: `$BOOKBANK_ROOT`,
+  else cwd if it looks like a content-repo clone, else `~/bookbank`.
 - `--only`  comma-separated book ids to publish. **Omit to publish every book
   whose `status` is `ready`.** Publishing is **additive** — books already in the
   clone that you don't list are kept and still appear on the shelf.
@@ -65,22 +66,30 @@ Books with real cover art (`cover.png` / `assets/img/cover-art.png` /
 
 ## Workflow
 
-1. **Resolve config, then get a current clone.** Reuse a stable checkout so
-   re-runs `git pull` instead of re-cloning ~90 MB. Standard location:
-   `$BOOKBANK_ROOT/.publish` (or `~/bookbank/.publish`).
+1. **Resolve config, then get a current clone.** If you're already standing
+   inside a clone of `$REPO` (the common case — a contributor just wrote a
+   book there via `/write-book`), **that clone *is* the root and *is* the
+   thing to push** — don't clone a second copy of the repo into itself. Only
+   maintain a separate `.publish` checkout when running from somewhere else
+   (e.g. `~/bookbank`, the legacy flat layout) — reuse a stable checkout there
+   so re-runs `git pull` instead of re-cloning ~90 MB:
    ```
    REPO="${BOOKBANK_BOOKS_REPO:-sunprema/books}"
    BASE="${BOOKBANK_SITE_URL:-https://${REPO%%/*}.github.io/${REPO#*/}}"
-   CLONE="${BOOKBANK_ROOT:-$HOME/bookbank}/.publish"
-   [ -d "$CLONE/.git" ] && git -C "$CLONE" pull -q origin main \
-     || gh repo clone "$REPO" "$CLONE"
+   if git rev-parse --show-toplevel >/dev/null 2>&1 && git remote -v | grep -q "$REPO"; then
+     CLONE="$(git rev-parse --show-toplevel)"   # already the content repo
+   else
+     CLONE="${BOOKBANK_ROOT:-$HOME/bookbank}/.publish"
+     [ -d "$CLONE/.git" ] && git -C "$CLONE" pull -q origin main \
+       || gh repo clone "$REPO" "$CLONE"
+   fi
    ```
    (`gh` must be authenticated as the repo owner — check `gh auth status`.)
 
-2. **Generate.** From the BookBank project dir:
+2. **Generate.**
    ```
-   python3 library/build-library.py --out "$CLONE" --repo "$REPO"            # all ready books
-   python3 library/build-library.py --out "$CLONE" --repo "$REPO" --only <id>  # one/some books
+   python3 "$CLAUDE_PLUGIN_ROOT/library/build-library.py" --out "$CLONE" --repo "$REPO"            # all ready books
+   python3 "$CLAUDE_PLUGIN_ROOT/library/build-library.py" --out "$CLONE" --repo "$REPO" --only <id>  # one/some books
    ```
    Read its stdout — it lists each book synced and whether it used real art or a
    gradient cover.
@@ -134,8 +143,8 @@ gh api -X POST "repos/$REPO/pages" -f "source[branch]=main" -f "source[path]=/"
 - **Only `ready` books ship.** The generator skips `requested`/`building` books
   even if named in `--only`.
 - **The shelf is generated — never hand-edit** `index.html` / `catalog.json` in
-  the repo. Change the look by editing `library/build-library.py` (the `LIBRARY_CSS`
-  / `render_index` parts) and re-running.
+  the repo. Change the look by editing the plugin's `library/build-library.py`
+  (the `LIBRARY_CSS` / `render_index` parts) and re-running.
 - **Keep `.nojekyll`** — without it Jekyll can drop `assets/`-style folders.
 - **Book readers are desktop-first** (fixed-viewport two-page spread); the shelf
   is fully responsive. Fine to publish; just know phones get a tight reader.
