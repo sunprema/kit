@@ -1,0 +1,35 @@
+{
+  "background" : {
+    "css" : "radial-gradient(circle at 22% 8%, #faf4e2, #f1e7cd 55%, #e7d9b6)",
+    "kind" : "gradient",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "Charter,\"Iowan Old Style\",Georgia,\"Times New Roman\",serif",
+    "--font-display" : "\"Iowan Old Style\",\"Palatino Linotype\",Palatino,\"Book Antiqua\",Georgia,serif",
+    "--font-mono" : "ui-monospace,Menlo,\"SF Mono\",monospace"
+  },
+  "id" : "codex",
+  "mood" : "A well-set printed book on warm paper: generous margins, elegant serif display, a restrained oxblood accent, tasteful drop caps and rules. Timeless and literary, never gaudy.",
+  "name" : "Codex",
+  "tagline" : "Warm aged paper, done well — a classic printed book",
+  "tokens" : {
+    "--accent" : "#8a2f22",
+    "--at" : "#7a5a1e",
+    "--bg" : "#f4ecd8",
+    "--bg-2" : "#ece0c4",
+    "--cm" : "#9c8a63",
+    "--code-bg" : "#efe3c6",
+    "--en" : "#3f6d3a",
+    "--fn" : "#3f6d3a",
+    "--ink" : "#2b2114",
+    "--ink-soft" : "#6f5c3e",
+    "--kw" : "#8a2f22",
+    "--lif" : "#8a2f22",
+    "--mac" : "#7a3b8a",
+    "--num" : "#a5561a",
+    "--rule" : "#d8c49c",
+    "--str" : "#4a6d2f",
+    "--ty" : "#7a5a1e"
+  }
+}

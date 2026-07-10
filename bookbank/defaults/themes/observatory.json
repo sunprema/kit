@@ -1,0 +1,35 @@
+{
+  "background" : {
+    "css" : "radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.8), transparent), radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.55), transparent), radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.7), transparent), radial-gradient(1px 1px at 85% 22%, rgba(255,255,255,.5), transparent), radial-gradient(1px 1px at 55% 12%, rgba(200,220,255,.6), transparent), radial-gradient(ellipse at 50% 0%, #131c3a, #0a0e1a 62%)",
+    "kind" : "starfield",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "Charter,Palatino,Georgia,serif",
+    "--font-display" : "\"Iowan Old Style\",Palatino,\"Palatino Linotype\",Georgia,serif",
+    "--font-mono" : "ui-monospace,\"SF Mono\",Menlo,monospace"
+  },
+  "id" : "observatory",
+  "mood" : "A night-sky reading room: near-black indigo ground with a faint scatter of stars, luminous serif, a single glowing blue accent spent sparingly like a star. Diagrams glow like constellations. Quiet, vast, awe-struck.",
+  "name" : "Observatory",
+  "tagline" : "Deep space, glowing ink — built for wonder",
+  "tokens" : {
+    "--accent" : "#7cc4ff",
+    "--at" : "#82aaff",
+    "--bg" : "#0a0e1a",
+    "--bg-2" : "#111830",
+    "--cm" : "#5c6a8a",
+    "--code-bg" : "#0d1424",
+    "--en" : "#7cc4ff",
+    "--fn" : "#7cc4ff",
+    "--ink" : "#e8ecf5",
+    "--ink-soft" : "#9aa6c4",
+    "--kw" : "#c792ea",
+    "--lif" : "#c792ea",
+    "--mac" : "#ff9ecb",
+    "--num" : "#f78c6c",
+    "--rule" : "#22304f",
+    "--str" : "#c3e88d",
+    "--ty" : "#82aaff"
+  }
+}

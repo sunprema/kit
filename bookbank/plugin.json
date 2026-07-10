@@ -1,0 +1,8 @@
+{
+  "name": "bookbank",
+  "version": "0.1.0",
+  "description": "Research-and-write BookBank books, publish them to the public library, and generate a book from a GitHub Issue — no local BookBank.app required.",
+  "author": {
+    "name": "Sundar Nambuvel"
+  }
+}

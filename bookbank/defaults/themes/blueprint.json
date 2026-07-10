@@ -1,0 +1,35 @@
+{
+  "background" : {
+    "css" : "repeating-linear-gradient(rgba(125,179,213,.13) 0 1px, transparent 1px 40px), repeating-linear-gradient(90deg, rgba(125,179,213,.13) 0 1px, transparent 1px 40px), radial-gradient(circle at 30% 0%, #123049, #0c2233 60%, #081a28)",
+    "kind" : "grid",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "-apple-system,\"Helvetica Neue\",Arial,sans-serif",
+    "--font-display" : "\"Avenir Next\",\"Helvetica Neue\",Arial,sans-serif",
+    "--font-mono" : "ui-monospace,\"SF Mono\",Menlo,monospace"
+  },
+  "id" : "blueprint",
+  "mood" : "An engineer's drafting table: deep navy ground, a faint cyan grid, crisp technical sans headings and monospaced accents. Diagrams read like schematics. Precise, confident, a little industrial.",
+  "name" : "Blueprint",
+  "tagline" : "Cyan-on-navy drafting grid — technical and precise",
+  "tokens" : {
+    "--accent" : "#46b1e0",
+    "--at" : "#7fd1c8",
+    "--bg" : "#0c2233",
+    "--bg-2" : "#123049",
+    "--cm" : "#5b7d92",
+    "--code-bg" : "#0a1b28",
+    "--en" : "#9fd35a",
+    "--fn" : "#9fd35a",
+    "--ink" : "#dbeaf4",
+    "--ink-soft" : "#8fb0c4",
+    "--kw" : "#46b1e0",
+    "--lif" : "#46b1e0",
+    "--mac" : "#c792ea",
+    "--num" : "#f0a15a",
+    "--rule" : "#244a63",
+    "--str" : "#b7e08a",
+    "--ty" : "#7fd1c8"
+  }
+}

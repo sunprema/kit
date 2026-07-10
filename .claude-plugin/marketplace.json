@@ -1,0 +1,13 @@
+{
+  "name": "kit",
+  "owner": {
+    "name": "Sundar Nambuvel"
+  },
+  "plugins": [
+    {
+      "name": "bookbank",
+      "source": "./bookbank",
+      "description": "Skills and tools for authoring BookBank books: research-and-write a topic into a self-contained HTML book, publish to the public library, and turn a GitHub Issue into a generated book."
+    }
+  ]
+}

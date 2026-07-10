@@ -1,0 +1,35 @@
+{
+  "background" : {
+    "css" : "radial-gradient(circle at 50% 0%, #33403a, #26302b 55%, #1e2622)",
+    "kind" : "gradient",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "Georgia,\"Iowan Old Style\",\"Times New Roman\",serif",
+    "--font-display" : "\"Chalkboard SE\",\"Bradley Hand\",Georgia,serif",
+    "--font-mono" : "ui-monospace,Menlo,\"SF Mono\",monospace"
+  },
+  "id" : "chalkboard",
+  "mood" : "A lecture-hall slate board: dark green-grey ground, chalk-white hand for headings, soft pastel chalk colors for emphasis and code. Derivations feel drawn by hand. Warm, patient, a little dusty.",
+  "name" : "Chalkboard",
+  "tagline" : "Slate board and chalk — for math and first principles",
+  "tokens" : {
+    "--accent" : "#f2d06b",
+    "--at" : "#9fd0e8",
+    "--bg" : "#26302b",
+    "--bg-2" : "#33403a",
+    "--cm" : "#8aa08f",
+    "--code-bg" : "#1f2723",
+    "--en" : "#a8e08a",
+    "--fn" : "#a8e08a",
+    "--ink" : "#eef3ec",
+    "--ink-soft" : "#b3c2b3",
+    "--kw" : "#f2a0b0",
+    "--lif" : "#f2a0b0",
+    "--mac" : "#d9b3f0",
+    "--num" : "#f0b27a",
+    "--rule" : "#46564d",
+    "--str" : "#f2d06b",
+    "--ty" : "#9fd0e8"
+  }
+}
