@@ -31,7 +31,10 @@ topic-fitting design**.
 
 For large course books the app's **BuildOrchestrator** drives the build as scoped
 steps instead of one queue pass. Each step is a **separate `claude` run**, so honor
-it as *exactly* that step and nothing more:
+it as *exactly* that step and nothing more. Outside the app, the `stage-book-build`
+skill in this plugin is the headless equivalent — it computes this same step list
+and runs one scoped `claude -p` per step; use it for a large/syllabus-length book
+instead of one long single-pass session.
 
 - **Scaffold** (prompt says "SCAFFOLD (not fully build) …") — create the shared
   **shell only**: `assets/` (the stylesheet + a theme skin matching
