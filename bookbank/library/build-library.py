@@ -96,9 +96,23 @@ def load_json(p: Path):
 
 
 def personas(root: Path) -> dict:
+    """Persona id -> {name, tagline, voice}, resolved via the same 3-tier
+    cascade as write-book: plugin defaults, then a per-user override, then a
+    per-clone override (each layer's ids win over the previous). A plain
+    content-repo clone (the common --root when standing inside sunprema/books)
+    has no personas/ dir of its own — without the plugin-defaults and
+    per-user tiers here, every persona name/tagline in the catalog goes
+    blank (a real regression this caught: 2026-07-10)."""
     out = {}
-    pdir = root / "personas"
-    if pdir.is_dir():
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    tiers = []
+    if plugin_root:
+        tiers.append(Path(plugin_root) / "defaults" / "personas")
+    tiers.append(Path.home() / ".claude" / "bookbank" / "personas")
+    tiers.append(root / "personas")
+    for pdir in tiers:
+        if not pdir.is_dir():
+            continue
         for f in pdir.glob("*.json"):
             try:
                 out[f.stem] = load_json(f)
@@ -123,6 +137,14 @@ def grad_for(book_id: str):
 
 
 def sync_book(src: Path, dst: Path):
+    # When --root and --out are the same clone (the recommended workflow when
+    # you're already standing inside the content repo), src and dst are the
+    # identical path. rmtree(dst) would then delete src out from under itself
+    # before copytree could read it — destroying the book with no recovery
+    # short of `git checkout`. Skip the sync entirely in that case; the book
+    # is already exactly where it needs to be.
+    if src.resolve() == dst.resolve():
+        return
     if dst.exists():
         shutil.rmtree(dst)
     shutil.copytree(
@@ -221,8 +243,10 @@ def inject_head(html_text, block):
     """Insert `block` just after the opening <head> tag, replacing any prior
     generated block so re-publishing is byte-stable (no spurious git churn)."""
     import re
+    # Also eat the newline inject_head prepended before OG_BEGIN on the prior
+    # run, or that newline accumulates by one on every republish forever.
     html_text = re.sub(
-        re.escape(OG_BEGIN) + r".*?" + re.escape(OG_END), "", html_text, flags=re.S)
+        r"\n?" + re.escape(OG_BEGIN) + r".*?" + re.escape(OG_END), "", html_text, flags=re.S)
     mo = re.search(r"<head\b[^>]*>", html_text, flags=re.I)
     if mo:
         i = mo.end()
