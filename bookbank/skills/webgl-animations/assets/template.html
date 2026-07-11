@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<!-- Three.js single-file starter implementing the full skill checklist:
+     capped DPR, resize, pointer-event orbit, pinch zoom, reduced motion,
+     time-based animation, visibility pause, disposal helper, WebGL fallback.
+     Uses r128 API so it also works inside Claude.ai artifacts. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Three.js Starter</title>
+<style>
+  html,body{margin:0;height:100%;background:#101418;overflow:hidden}
+  #stage{position:relative;width:100%;height:100%;touch-action:none;cursor:grab}
+  #stage.dragging{cursor:grabbing}
+  #stage canvas{display:block;width:100%;height:100%}
+  #hint{position:absolute;top:12px;left:50%;transform:translateX(-50%);
+    font:11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;
+    color:#9aa7b0;background:rgba(16,20,24,.6);padding:5px 12px;border-radius:20px;
+    pointer-events:none;transition:opacity .6s}
+  #fallback{color:#ccc;font:14px system-ui;padding:2rem;display:none}
+</style>
+</head>
+<body>
+<div id="stage"><div id="hint">drag to orbit · pinch or scroll to zoom</div></div>
+<div id="fallback">WebGL is not available in this browser.</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  if (!window.WebGLRenderingContext) {
+    document.getElementById('fallback').style.display = 'block';
+    return;
+  }
+
+  const stage = document.getElementById('stage');
+  const hint = document.getElementById('hint');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // --- renderer / scene / camera ---
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  stage.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const key = new THREE.DirectionalLight(0xfff2dd, 0.9); key.position.set(3, 5, 4);
+  const rim = new THREE.DirectionalLight(0xbcd9ff, 0.35); rim.position.set(-4, -2, -3);
+  scene.add(key, rim);
+
+  // --- demo content: replace with the actual scene ---
+  const geo = new THREE.TorusKnotGeometry(1, 0.32, 160, 24);
+  const mat = new THREE.MeshStandardMaterial({ color: 0x6fb7d9, roughness: 0.4, metalness: 0.2 });
+  const knot = new THREE.Mesh(geo, mat);
+  scene.add(knot);
+
+  // Disposal helper: use when swapping scene content at runtime.
+  function disposeObject(obj) {
+    obj.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) {
+        (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
+          for (const k in m) if (m[k] && m[k].isTexture) m[k].dispose();
+          m.dispose();
+        });
+      }
+    });
+    obj.parent && obj.parent.remove(obj);
+  }
+
+  // --- minimal orbit controls (pointer events + wheel + pinch) ---
+  let theta = 0.8, phi = 1.1, dist = 5;
+  const target = new THREE.Vector3(0, 0, 0);
+  function applyCamera() {
+    phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi));
+    dist = Math.max(2.5, Math.min(15, dist));
+    camera.position.set(
+      target.x + dist * Math.sin(phi) * Math.sin(theta),
+      target.y + dist * Math.cos(phi),
+      target.z + dist * Math.sin(phi) * Math.cos(theta));
+    camera.lookAt(target);
+  }
+  let dragging = false, px = 0, py = 0, pinch = 0, interacted = false;
+  stage.addEventListener('pointerdown', e => {
+    if (!e.isPrimary) return;
+    dragging = true; interacted = true; px = e.clientX; py = e.clientY;
+    stage.classList.add('dragging'); hint.style.opacity = 0;
+  });
+  addEventListener('pointerup', () => { dragging = false; stage.classList.remove('dragging'); });
+  addEventListener('pointermove', e => {
+    if (!dragging || !e.isPrimary) return;
+    theta -= (e.clientX - px) * 0.006;
+    phi   -= (e.clientY - py) * 0.006;
+    px = e.clientX; py = e.clientY;
+    applyCamera();
+  });
+  stage.addEventListener('wheel', e => {
+    e.preventDefault(); interacted = true;
+    dist *= 1 + Math.sign(e.deltaY) * 0.08; applyCamera();
+  }, { passive: false });
+  stage.addEventListener('touchmove', e => {
+    if (e.touches.length !== 2) { pinch = 0; return; }
+    dragging = false; interacted = true;
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                         e.touches[0].clientY - e.touches[1].clientY);
+    if (pinch) { dist *= pinch / d; applyCamera(); }
+    pinch = d;
+  }, { passive: true });
+  stage.addEventListener('touchend', () => { pinch = 0; });
+
+  // --- resize ---
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize);
+
+  // --- render loop: time-based, pauses when tab hidden ---
+  const clock = new THREE.Clock();
+  let running = true;
+  document.addEventListener('visibilitychange', () => {
+    running = !document.hidden;
+    if (running) { clock.getDelta(); loop(); }   // reset delta, resume
+  });
+
+  function loop() {
+    if (!running) return;
+    const dt = clock.getDelta();
+    if (!reducedMotion) {
+      knot.rotation.y += 0.4 * dt;               // time-based, not per-frame constant
+      knot.rotation.x += 0.15 * dt;
+      if (!dragging && !interacted) { theta += 0.08 * dt; applyCamera(); }
+    }
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+
+  resize();
+  applyCamera();
+  loop();
+})();
+</script>
+</body>
+</html>
