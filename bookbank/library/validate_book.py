@@ -25,6 +25,13 @@ of a human noticing mojibake or a broken page-fold after the fact:
   book-json        book.json is valid JSON, has the required fields, and is
                    internally consistent (every concept a "ready" status
                    claims has its file on disk).
+  image-slots      [warning] every images[] entry's declared file exists on
+                   disk. Non-fatal: a book's text can legitimately be "ready"
+                   before its art is dropped (build-library.py falls back to
+                   a gradient cover for exactly this case).
+
+Every finding has a severity, "error" (default) or "warning" — only an
+"error"-severity finding fails the run (see Finding.severity).
 
 Usage:
   validate_book.py <book-dir> [<book-dir> ...]
@@ -32,7 +39,8 @@ Usage:
   validate_book.py --root <bookbank-root> --changed-under <path>  # only book
                    dirs that contain at least one path under <path> (CI diff)
 
-Exits 0 if every book passes, 1 if any check fails.
+Exits 0 if every book has no error-severity finding, 1 otherwise. Warnings
+are printed but never fail the run.
 """
 import argparse
 import json
@@ -64,15 +72,17 @@ def default_root():
 
 
 class Finding:
-    def __init__(self, book, rule, path, message):
+    def __init__(self, book, rule, path, message, severity="error"):
         self.book = book
         self.rule = rule
         self.path = path
         self.message = message
+        self.severity = severity  # "error" (default, fails the run) or "warning"
 
     def __str__(self):
         loc = f"{self.path}: " if self.path else ""
-        return f"[{self.book}] {self.rule}: {loc}{self.message}"
+        tag = "" if self.severity == "error" else f"{self.severity.upper()} "
+        return f"[{self.book}] {tag}{self.rule}: {loc}{self.message}"
 
 
 def iter_html(book_dir: Path):
@@ -261,6 +271,27 @@ def check_book_json(book_dir: Path, book_id: str, findings: list):
             'book status is "ready" but index.html does not exist'))
 
 
+def check_image_slots(book_dir: Path, book_id: str, findings: list):
+    bj = book_dir / "book.json"
+    if not bj.is_file():
+        return
+    try:
+        data = json.loads(bj.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return  # check_book_json already reports this as an error
+
+    for img in data.get("images", []):
+        f = img.get("file")
+        if f and not (book_dir / f).is_file():
+            findings.append(Finding(book_id, "image-slots", "book.json",
+                f'image slot {img.get("id", "<no id>")!r} declares file {f!r} '
+                "which does not exist on disk yet — a book's text can "
+                'legitimately be "ready" before its art is dropped (the shelf '
+                "falls back to a gradient cover); drop the file with "
+                "place_image.py to clear this",
+                severity="warning"))
+
+
 CHECKS = [
     check_charset,
     check_self_contained,
@@ -269,6 +300,7 @@ CHECKS = [
     check_click_routing,
     check_mobile_fallback,
     check_book_json,
+    check_image_slots,
 ]
 
 
@@ -315,24 +347,29 @@ def main():
     if not targets:
         ap.error("no book directories given — pass one or more paths, or --root")
 
-    total_findings = 0
+    total_errors = 0
+    total_warnings = 0
     for book_dir in targets:
         if not book_dir.is_dir():
             print(f"[{book_dir.name}] ERROR: not a directory: {book_dir}", file=sys.stderr)
-            total_findings += 1
+            total_errors += 1
             continue
         findings = validate_book(book_dir)
+        errors = [f for f in findings if f.severity == "error"]
+        warnings = [f for f in findings if f.severity != "error"]
         if findings:
             for f in findings:
                 print(str(f))
-            total_findings += len(findings)
         else:
             print(f"[{book_dir.name}] OK")
+        total_errors += len(errors)
+        total_warnings += len(warnings)
 
-    if total_findings:
-        print(f"\n{total_findings} issue(s) found.")
-        return 1
-    return 0
+    if total_errors or total_warnings:
+        print(f"\n{total_errors} error(s), {total_warnings} warning(s) found.")
+    # Only error-severity findings fail the run — a warning (e.g. a dangling
+    # image slot) is surfaced but doesn't block a book from being "ready".
+    return 1 if total_errors else 0
 
 
 if __name__ == "__main__":

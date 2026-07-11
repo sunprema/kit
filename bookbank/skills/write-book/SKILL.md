@@ -621,7 +621,15 @@ Wherever a real/generated image would genuinely help, create an **image slot**:
    The `<img>` lives first and starts broken (the file doesn't exist yet); its
    `onerror` flags the slot, and the app's injected behavior CSS reveals the drop
    prompt. Once the user drops an image, the app writes it to `file`, reloads, the
-   `<img>` resolves, and the placeholder hides — no rebuild needed.
+   `<img>` resolves, and the placeholder hides — no rebuild needed. **Without
+   the app** (the normal contributor path), fill a slot with
+   `${CLAUDE_PLUGIN_ROOT}/library/place_image.py <book-dir> <slot-id> <source-file>`
+   — it looks up the slot's declared `file`/`aspect`, converts the source to
+   the right extension, writes it to the exact declared path, and warns
+   (non-fatal) if the actual aspect is off from the declared one by more than
+   ~10%. A dangling slot (declared but not yet on disk) is a `validate_book.py`
+   **warning**, not an error — the book can still ship `"ready"` and the
+   public shelf falls back to a gradient cover until the art lands.
 3. **Style the slot** in `book.css` to fit the book (the app only injects the
    show/hide behavior + drag wiring + the "Copy prompt" action). Give `.img-drop`
    a tasteful dashed-card look, style `.img-prompt` as a readable quote, and the
