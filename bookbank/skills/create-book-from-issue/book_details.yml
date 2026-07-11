@@ -1,0 +1,74 @@
+name: New book request
+description: Request a new BookBank book. A maintainer (or the bookbank cloud routine) will generate it and open a PR for review.
+title: "[book] "
+labels:
+  - book-request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for requesting a book! Every field except **Topic** and the
+        consent checkbox is optional — leave the rest blank and BookBank will
+        make reasonable choices.
+  - type: input
+    id: topic
+    attributes:
+      label: Topic
+      description: What should the book be about?
+      placeholder: "e.g. the Rust programming language"
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: Title
+      description: A specific book title, if you have one in mind. Otherwise BookBank picks one.
+      placeholder: "e.g. Rust: Fearless Systems Programming"
+    validations:
+      required: false
+  - type: input
+    id: persona
+    attributes:
+      label: Persona
+      description: A narrator voice — an existing persona id (e.g. "feynman"), or describe one in free text (e.g. "in the voice of a excited lab-partner").
+    validations:
+      required: false
+  - type: input
+    id: theme
+    attributes:
+      label: Theme
+      description: A visual look — an existing theme id (e.g. "blueprint"), or describe one in free text (e.g. "dark academia, warm lamplight").
+    validations:
+      required: false
+  - type: textarea
+    id: seed-concepts
+    attributes:
+      label: Seed concepts
+      description: Specific concepts/chapters that must be included, one per line. BookBank adds more around these as needed.
+      placeholder: |
+        Ownership & moves
+        Borrowing & lifetimes
+        Fearless concurrency
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Any other brief context — audience, depth, things to emphasize or avoid.
+    validations:
+      required: false
+  - type: textarea
+    id: reference-material
+    attributes:
+      label: Reference material
+      description: Links or pasted images for research and art direction. These are NOT published as-is — they're for the author's/illustrator's reference only.
+    validations:
+      required: false
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Publishing consent
+      options:
+        - label: I understand this book may be published publicly (on sunprema.github.io/books) once reviewed.
+          required: true
