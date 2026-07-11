@@ -54,18 +54,32 @@ recreating:
    in this sandbox, push the branch and use its compare URL instead.
 5. Comment the PR (or compare URL) back on the originating issue.
 
-## Open questions — resolve on first real fire
+## Open questions — status after the first real fire (2026-07-11, issue #2)
 
-1. Whether `gh pr create` works unattended inside this sandbox at all
-   (branch-push + compare-URL fallback is written into the prompt either
-   way).
-2. Whether `RemoteTrigger`'s `run` action's optional `body` actually reaches
-   the routine as usable context, or is ignored — the prompt's own
-   oldest-open-issue fallback means a bare `run` call is useful either way,
-   but per-call issue targeting depends on this working.
-3. Whether the `Default` environment's network access is broad enough for
-   `write-book`'s general web research, or only covers a trusted allowlist
-   (package registries / cloud APIs / dev domains).
+1. **Resolved: `gh pr create --draft` works unattended.** Fired against a
+   real test issue (sunprema/books#2); the routine pushed
+   `claude/book-2-http-caching-headers`, opened
+   [PR #3](https://github.com/sunprema/books/pull/3) as a draft with a
+   correct `Closes #2` body and the expected (non-"NEEDS FIXES") title, and
+   commented the PR link back on the issue — all three steps of the prompt
+   completed exactly as written. The branch-push/compare-URL fallback was
+   never exercised (wasn't needed) but is still there for the future.
+2. **Inconclusive.** Fired with `body: { text: "2" }`, and it correctly
+   generated a book for issue #2 — but #2 was *also* the oldest (only) open
+   `book-request` issue at that moment, so this run can't distinguish
+   "the body actually reached the prompt" from "the fallback found the same
+   issue anyway." Re-test with two open issues and a `body.text` pointing at
+   the *non-oldest* one to resolve this for real.
+3. **Resolved: the `Default` environment's network access is sufficient.**
+   The generated PR cites real research against MDN's Cache-Control/ETag
+   pages and RFC 9110/9111 — `write-book`'s WebSearch/WebFetch reach worked
+   without any Trusted-allowlist restriction being visible.
+
+Also observed: the routine followed the issue's "keep it short" note more
+faithfully (3 concepts) than the equivalent local test earlier in this
+project's build did (which produced 8 despite the same instruction) — not a
+routine-specific finding, just model-run variance, noted here in case it
+recurs.
 
 ## Firing it
 
