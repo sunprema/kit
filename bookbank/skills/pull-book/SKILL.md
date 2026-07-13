@@ -61,9 +61,20 @@ losing their local copy's link to the shared clone. `add` accumulates.)
 
 ## Notes
 
-- This only pulls what's on `main` (published, `"ready"` books) — it can't
-  pull a book still on an open PR branch; check that branch out directly for
-  that case (see `contributor-setup.md`'s partial-clone recipe, same idea
-  applied to a `git fetch`/`checkout` of the PR's branch instead of `main`).
+- This only pulls what's on `main` (published, `"ready"` books) — for a book
+  still on an open PR branch, run the standalone script in this skill's
+  directory instead: `pull-book-branch.sh [--force] <branch-name>`. It
+  discovers which book(s) the branch touches, fetches just those into the
+  same `.pull` sparse clone, copies them into `<root>/books/`, and leaves
+  the clone back on `main`. `--force` overwrites a local copy whose
+  `book.json` says `"revising"` (otherwise that book is skipped). No agent
+  needed — it's plain bash.
+- The reverse direction (you edited a pulled book locally and want the change
+  back on the repo) is `push-book-pr.sh [--onto <branch>] [--dry-run]
+  <book-id> [commit message...]`, in the same directory. It commits the local
+  copy of `books/<id>` and raises a PR off `main` — or, with `--onto`, pushes
+  onto an existing unmerged branch (e.g. `claude/book-...`) to update that
+  branch's open PR instead of opening a duplicate. `--dry-run` shows the
+  commit without pushing. Also plain bash (git + gh).
 - `<root>/.pull` accumulates sparse paths over time and is safe to delete
   entirely if it grows unwieldy — the next pull just re-clones it.
