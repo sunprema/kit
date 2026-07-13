@@ -90,6 +90,27 @@ project's build did (which produced 8 despite the same instruction) — not a
 routine-specific finding, just model-run variance, noted here in case it
 recurs.
 
+## Known issues / to look at
+
+1. **Every routine run full-clones the ~90MB books repo (2026-07-12).** The
+   platform materializes whatever repo `job_config.ccr.session_context.sources`
+   lists, and the docs offer no shallow/sparse option for that initial clone —
+   yet generating a new book needs zero existing blobs from the library, so
+   per-run transfer grows linearly with the library for no benefit.
+   **Proposed fix (designed, not yet implemented):** point `sources` at
+   `sunprema/kit` (tiny; the session installs the plugin from it anyway) and
+   have the prompt bootstrap the content repo itself with
+   `git clone --filter=blob:none --sparse https://github.com/sunprema/books`
+   — the same recipe `pull-book`'s `.pull` clone uses locally, making per-run
+   transfer a few hundred KB regardless of library size.
+   **Blocking unknown:** whether the sandbox's git/`gh` token is minted
+   per-listed-repo (a `kit`-sourced session couldn't push to `books`) or
+   per-GitHub-App-installation (it just works). Resolve empirically: update
+   the routine, test-fire on a real queued issue, and have the prompt report
+   `du -sh` of both checkouts to replace the full-clone *assumption* with a
+   measurement. If auth fails, the run dies at the bootstrap clone before
+   generating anything; reverting `sources` is one API call.
+
 ## Firing it
 
 Owner-side, from a normal Claude Code session with `RemoteTrigger` access:
