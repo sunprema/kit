@@ -23,7 +23,8 @@ contributor without access to the owner's routine should use
 - `/dispatch-book-issue <issue-number>` — e.g. `/dispatch-book-issue 42`.
 - `/dispatch-book-issue` (no arg) — dispatch with no issue number; the
   routine's own prompt falls back to the oldest open `book-request` issue on
-  `sunprema/books`.
+  `sunprema/books` that is **not** already labeled `in-progress` (i.e. it
+  skips requests another run is already generating).
 
 ## Procedure
 

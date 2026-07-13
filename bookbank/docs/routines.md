@@ -45,14 +45,23 @@ recreating:
 1. Install the tooling plugin if not already present.
 2. Resolve which issue to process: the run's freeform text if given,
    otherwise the oldest open `book-request`-labeled issue on
-   `sunprema/books`.
-3. Run `/create-book-from-issue <n>`.
-4. Commit, push a `claude/book-<n>-<slug>` branch, and `gh pr create --draft`
+   `sunprema/books` **without the `in-progress` label** (skipping requests
+   another run is already generating; stop if none qualify).
+3. Duplicate-work guard: if the resolved issue already carries
+   `in-progress`, stop and report instead of generating a duplicate
+   (unless the run's freeform text explicitly says to redo it). Otherwise
+   add the `in-progress` label + a "🏗️ Work started" comment *before* any
+   generation, so a concurrently-fired run picks a different issue.
+4. Run `/create-book-from-issue <n>`.
+5. Commit, push a `claude/book-<n>-<slug>` branch, and `gh pr create --draft`
    with a `Closes #<n>` body — titled `"NEEDS FIXES — <title>"` instead of
    the normal title if `validate_book.py` left any error-severity findings,
    so a failure is never silent. If `gh pr create` isn't callable unattended
    in this sandbox, push the branch and use its compare URL instead.
-5. Comment the PR (or compare URL) back on the originating issue.
+6. Comment the PR (or compare URL) back on the originating issue. On a
+   failure that produced no branch/PR, remove `in-progress` again so the
+   request re-enters the queue; on success the label stays and the merged
+   PR's `Closes #<n>` closes the issue.
 
 ## Open questions — status after the first real fire (2026-07-11, issue #2)
 

@@ -30,7 +30,28 @@ book correct (structure, design, image slots, everything in its SKILL.md).
    gh issue view <n> --repo <repo> --json title,body,labels,comments,url
    ```
 
-3. **Parse the Issue Form body.** GitHub renders each form field as a
+3. **Guard against duplicate work, then mark the issue as started.** If the
+   fetched issue's labels already include **`in-progress`**, **stop here** —
+   another run (a contributor's local session or the cloud routine) is
+   already generating this book. Report that, and list what's actually free
+   to work on (`gh issue list --repo <repo> --label book-request --state
+   open`, minus the `in-progress` ones) — only proceed anyway if the user
+   explicitly asked to redo/restart this specific issue. Otherwise, mark the
+   issue **before any generation work**, so a concurrent run skips it:
+   ```
+   gh issue edit <n> --repo <repo> --add-label in-progress
+   gh issue comment <n> --repo <repo> --body "🏗️ Work started — generating this book. A PR will be linked here when it's ready."
+   ```
+   (If the repo doesn't have the label yet: `gh label create in-progress
+   --repo <repo> --color fbca04 --description "A BookBank book is already
+   being generated for this issue — do not start duplicate work"`.)
+   Lifecycle: on success **leave the label on** — the PR's `Closes #<n>`
+   closes the issue when it merges. If generation fails with no
+   branch/PR to show for it, **remove the label**
+   (`gh issue edit <n> --repo <repo> --remove-label in-progress`) so the
+   request goes back into the queue instead of looking stuck in progress.
+
+4. **Parse the Issue Form body.** GitHub renders each form field as a
    markdown heading `### <Label>` followed by the answer (or `_No response_`
    if left blank). The label strings below **must match
    `book_details.yml` exactly** — this is a documented coupling between the
@@ -40,18 +61,18 @@ book correct (structure, design, image slots, everything in its SKILL.md).
    |-------------------------|----------------------------------------------|
    | `Topic`                 | `topic` (required — error out if `_No response_`) |
    | `Title`                 | `title`, if present                           |
-   | `Persona`                | see step 5                                    |
-   | `Theme`                  | see step 5                                    |
+   | `Persona`                | see step 6                                    |
+   | `Theme`                  | see step 6                                    |
    | `Seed concepts`           | one `concepts[]` entry per non-blank line, `source: "user"`, `status: "requested"` |
    | `Notes`                   | `notes`                                       |
-   | `Reference material`      | never copied into `book.json` — see step 6    |
+   | `Reference material`      | never copied into `book.json` — see step 7    |
 
-4. **Slugify the title** (or the topic, if no title was given) into a
+5. **Slugify the title** (or the topic, if no title was given) into a
    book id: lowercase, spaces/punctuation → `-`, collapse repeats. If
    `<root>/books/<id>/` already exists, disambiguate by appending `-2`,
    `-3`, … (check each candidate) rather than colliding with an existing book.
 
-5. **Resolve persona/theme against the 3-tier cascade** (`write-book`'s
+6. **Resolve persona/theme against the 3-tier cascade** (`write-book`'s
    "Personas & themes" section) — if the free-text `Persona`/`Theme` answer
    case-insensitively matches an existing id at any tier, use that id.
    Otherwise, if the field is non-blank, pass the raw text through as part of
@@ -61,7 +82,7 @@ book correct (structure, design, image slots, everything in its SKILL.md).
    write an unresolved free-text string into the `persona`/`theme` fields
    (those fields are ids, not prose).
 
-6. **Download any attachments to a scratch dir OUTSIDE the book folder** —
+7. **Download any attachments to a scratch dir OUTSIDE the book folder** —
    e.g. `${TMPDIR:-/tmp}/bookbank-issue-<n>/` — never into
    `<book-dir>/assets/img/`. `Reference material` links/images are for
    research and art direction only; if they landed inside the book folder,
@@ -71,7 +92,7 @@ book correct (structure, design, image slots, everything in its SKILL.md).
    `write-book` sees it as context, without ever writing the files themselves
    under the book folder.
 
-7. **Write `book.json`**:
+8. **Write `book.json`**:
    ```json
    {
      "id": "<slug>",
@@ -93,17 +114,17 @@ book correct (structure, design, image slots, everything in its SKILL.md).
    array) if no seed concepts were given — `write-book` chooses concepts
    itself in that case.
 
-8. **Defer to `write-book`'s Procedure.** Run its "process the queue" path
+9. **Defer to `write-book`'s Procedure.** Run its "process the queue" path
    (conceptually `/write-book` with no argument, scoped to this one book) —
    do not re-implement research/design/build logic here.
 
-9. **Run `validate_book.py`** against the finished book dir. Report errors
+10. **Run `validate_book.py`** against the finished book dir. Report errors
    and warnings **distinctly** (they're different severities — see
    `validate_book.py`'s docstring). Do **not** flip the book to `"ready"`
    if any error-severity finding remains; a warning (e.g. a dangling image
    slot) does not block `"ready"`.
 
-10. **Does not open a PR.** PR-opening is dispatch-mode-specific:
+11. **Does not open a PR.** PR-opening is dispatch-mode-specific:
     - **Local dispatch** (a contributor running this skill themselves): tell
       them the book is built/validated and to review it, then run
       `gh pr create` themselves when satisfied.
