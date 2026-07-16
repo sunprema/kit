@@ -58,7 +58,17 @@ recreating:
    the normal title if `validate_book.py` left any error-severity findings,
    so a failure is never silent. If `gh pr create` isn't callable unattended
    in this sandbox, push the branch and use its compare URL instead.
-6. Comment the PR (or compare URL) back on the originating issue. On a
+6. Open image-request issues for the book's unfilled art slots:
+   `python3 .github/scripts/open_image_requests.py <book-id> --branch
+   claude/book-<n>-<slug> --repo sunprema/books` (the opener lives in the
+   books repo, so the freshly-cut branch has it). One `image-request` issue
+   per slot with no file yet, each marked with book/slot/branch so the
+   `place-image` Action can later commit the maintainer's art onto *this* PR
+   branch — the book publishes only when the PR merges, so readers never see
+   the prompt placeholders (see `.github/AUTOMATION.md` in the books repo).
+   Best-effort + idempotent: a clean no-op if the book has no slots, and a
+   script error is noted on the issue but never fails the run.
+7. Comment the PR (or compare URL) back on the originating issue. On a
    failure that produced no branch/PR, remove `in-progress` again so the
    request re-enters the queue; on success the label stays and the merged
    PR's `Closes #<n>` closes the issue.
