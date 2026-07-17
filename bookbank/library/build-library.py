@@ -377,9 +377,12 @@ def card_html(e):
         cover_cls = "cover gradient"
         style = f'style="--g1:{c1};--g2:{c2}"'
 
-    # data-* attributes power the client-side search/filter.
+    # data-* attributes power the client-side search/filter. The card is a div
+    # with a stretched .card-link overlay (not one big <a>) so the offline
+    # download <button> isn't nested inside an anchor.
     hay = " ".join([e["title"], e["topic"], voice, e["summary"]]).lower()
-    return f"""      <a class="card" href="{esc(e['url'])}" data-search="{esc(hay)}" data-voice="{esc(e['persona']['id'])}">
+    return f"""      <div class="card" data-search="{esc(hay)}" data-voice="{esc(e['persona']['id'])}">
+        <a class="card-link" href="{esc(e['url'])}" aria-label="Read {esc(e['title'])}"></a>
         <div class="{cover_cls}" {style}>{art}</div>
         <div class="card-body">
           <h2 class="card-title">{esc(e['title'])}</h2>
@@ -387,8 +390,11 @@ def card_html(e):
           <p class="card-summary">{esc(e['summary'])}</p>
           <div class="card-meta">{meta_line}</div>
         </div>
-        <span class="card-open">Read →</span>
-      </a>"""
+        <div class="card-foot">
+          <span class="card-open">Read →</span>
+          <button class="dl" type="button" data-book="{esc(e['id'])}" data-bytes="{e.get('offline_bytes', 0)}">⤓ Offline</button>
+        </div>
+      </div>"""
 
 
 def voice_filters(entries):
@@ -541,9 +547,21 @@ main{max-width:1180px;margin:0 auto;padding:2.5rem 1.5rem 1rem}
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
 }
 .card-meta{margin-top:auto;padding-top:.7rem;color:var(--muted);font-size:.8rem;font-weight:600}
-.card-open{
-  padding:.7rem 1.2rem 1.1rem;color:var(--accent);font-weight:700;font-size:.9rem;
+.card-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:.6rem;
+  padding:.7rem 1.2rem 1.1rem;
 }
+.card-open{color:var(--accent);font-weight:700;font-size:.9rem}
+.card-link{position:absolute;inset:0;z-index:1;border-radius:var(--radius)}
+.dl{
+  position:relative;z-index:2;border:1px solid var(--edge);background:var(--panel);
+  color:var(--muted);padding:.3rem .7rem;border-radius:999px;font:inherit;
+  font-size:.78rem;font-weight:650;cursor:pointer;transition:all .15s;
+}
+.dl:hover{color:var(--ink);border-color:var(--accent)}
+.dl.is-busy{color:var(--accent);border-color:var(--accent);cursor:progress}
+.dl.is-done{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.dl[hidden]{display:none}
 
 .empty{text-align:center;color:var(--muted);padding:3rem 1rem}
 footer{
@@ -591,6 +609,85 @@ LIBRARY_JS = """// Client-side search + voice filter for the shelf. No dependenc
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(function () {});
   }
+
+  // Offline downloads: each card's "⤓ Offline" button precaches the book's
+  // full file list (its generated offline.json) into a persistent cache the
+  // service worker serves from. Click again to remove the download.
+  var OFFLINE = 'bookbank-offline';
+  var dls = Array.prototype.slice.call(document.querySelectorAll('.dl'));
+  if (!('caches' in window)) {
+    dls.forEach(function (b) { b.hidden = true; });
+    dls = [];
+  }
+  function setUI(btn, state, pct) {
+    var bytes = +btn.getAttribute('data-bytes');
+    var size = bytes > 0 ? ' (' + (bytes / 1048576).toFixed(1) + ' MB)' : '';
+    btn.classList.remove('is-busy', 'is-done');
+    if (state === 'busy') {
+      btn.classList.add('is-busy');
+      btn.textContent = pct + '%';
+    } else if (state === 'done') {
+      btn.classList.add('is-done');
+      btn.textContent = '✓ Offline';
+      btn.title = 'Saved for offline reading — click to remove the download';
+    } else {
+      btn.textContent = '⤓ Offline';
+      btn.title = 'Download this book for offline reading' + size;
+    }
+  }
+  dls.forEach(function (btn) {
+    var id = btn.getAttribute('data-book');
+    var base = new URL('books/' + id + '/', location.href).href;
+    var key = 'bb-offline-' + id;
+    setUI(btn, localStorage.getItem(key) ? 'done' : 'idle');
+
+    btn.addEventListener('click', function () {
+      if (btn.classList.contains('is-busy')) return;
+
+      if (localStorage.getItem(key)) {  // downloaded → remove
+        caches.open(OFFLINE).then(function (c) {
+          return c.keys().then(function (reqs) {
+            return Promise.all(reqs
+              .filter(function (r) { return r.url.indexOf(base) === 0; })
+              .map(function (r) { return c.delete(r); }));
+          });
+        }).then(function () {
+          localStorage.removeItem(key);
+          setUI(btn, 'idle');
+        });
+        return;
+      }
+
+      setUI(btn, 'busy', 0);
+      fetch(base + 'offline.json').then(function (r) {
+        if (!r.ok) throw new Error('offline.json ' + r.status);
+        return r.json();
+      }).then(function (m) {
+        var urls = [base].concat(m.files.map(function (p) { return base + p; }));
+        return caches.open(OFFLINE).then(function (c) {
+          var i = 0, done = 0;
+          function next() {
+            if (i >= urls.length) return Promise.resolve();
+            return c.add(urls[i++]).then(function () {
+              done++;
+              setUI(btn, 'busy', Math.round(done / urls.length * 100));
+              return next();
+            });
+          }
+          // A few parallel lanes keep it quick without hammering the host.
+          var lanes = [];
+          for (var n = 0; n < 6 && n < urls.length; n++) lanes.push(next());
+          return Promise.all(lanes);
+        });
+      }).then(function () {
+        localStorage.setItem(key, '1');
+        setUI(btn, 'done');
+      }).catch(function (err) {
+        setUI(btn, 'idle');
+        btn.title = 'Download failed (' + err.message + ') — click to retry';
+      });
+    });
+  });
 })();
 """
 
@@ -673,6 +770,9 @@ def render_manifest():
 # already-visited books readable offline.
 SERVICE_WORKER = """// BookBank Library service worker — generated by build-library.py.
 var VERSION = 'bookbank-@VERSION@';
+// Persistent cache holding user-requested full-book downloads (the shelf's
+// "⤓ Offline" button fills it). Never dropped on version bumps.
+var OFFLINE = 'bookbank-offline';
 var SHELL = ['./', 'assets/library.css', 'assets/library.js', 'catalog.json',
              'manifest.webmanifest', 'assets/icon-192.png', 'assets/icon-512.png'];
 
@@ -683,7 +783,8 @@ self.addEventListener('install', function (e) {
 
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== VERSION; })
+    return Promise.all(keys
+      .filter(function (k) { return k !== VERSION && k !== OFFLINE; })
       .map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
@@ -716,6 +817,30 @@ self.addEventListener('fetch', function (e) {
   }
 });
 """
+
+
+def write_offline_manifest(book_dir: Path):
+    """Write books/<id>/offline.json — the complete file list the shelf's
+    "⤓ Offline" button precaches — and return the book's total bytes (shown
+    on the button). Deterministic (sorted paths, version hashed from
+    path+size pairs) so republishing an unchanged book is byte-stable.
+    Must run AFTER OG stamping, which adds og-share.jpg and edits pages."""
+    if not book_dir.is_dir():
+        return 0
+    files = []
+    for p in sorted(book_dir.rglob("*")):
+        rel = p.relative_to(book_dir).as_posix()
+        if not p.is_file() or p.name == ".DS_Store" or rel == "offline.json":
+            continue
+        files.append((rel, p.stat().st_size))
+    version = hashlib.sha1(json.dumps(files).encode("utf-8")).hexdigest()[:10]
+    total = sum(s for _, s in files)
+    (book_dir / "offline.json").write_text(json.dumps({
+        "version": version,
+        "bytes": total,
+        "files": [f for f, _ in files],
+    }, indent=1) + "\n", encoding="utf-8")
+    return total
 
 
 def render_readme(base_url):
@@ -761,6 +886,18 @@ def main():
     print(f"root={root}\nout={out}\nonly={only or '(all ready)'}")
     entries = build_catalog(root, out, only)
 
+    # Book share previews FIRST (creates og-share.jpg, edits book pages), so
+    # the offline manifests below capture each book's final file set. The
+    # shelf's own OG block is stamped after index.html is written.
+    stamped = 0
+    for e in entries:
+        if inject_book_og(out, e, base_url):
+            stamped += 1
+
+    # Offline manifests: per-book file lists driving the download buttons.
+    for e in entries:
+        e["offline_bytes"] = write_offline_manifest(out / "books" / e["id"])
+
     (out / "index.html").write_text(render_index(entries), encoding="utf-8")
     (out / "catalog.json").write_text(
         json.dumps({"books": entries}, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -782,11 +919,7 @@ def main():
     if not (out / "README.md").exists():
         (out / "README.md").write_text(render_readme(base_url), encoding="utf-8")
 
-    # --- Share previews: stamp OG/Twitter tags into every book + the shelf ---
-    stamped = 0
-    for e in entries:
-        if inject_book_og(out, e, base_url):
-            stamped += 1
+    # --- Share preview for the shelf itself (books were stamped above) ---
     shelf_cover = next((e for e in entries if e.get("cover")), None)
     shelf_img = None
     if shelf_cover:
