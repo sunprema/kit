@@ -41,14 +41,20 @@ instead of one long single-pass session.
   `designDirection`, the two-page-spread pager `book.js`, and any interactive/widget
   engine the pages will share) and `index.html` (cover + table of contents linking
   each concept **in book.json order** to `concepts/NN-<concept id>.html`, `NN` =
-  1-based, zero-padded). Lock the persona voice and visual design. Do **not** write
-  any concept body and do **not** change any concept's status. This fixes the
-  template every later page reuses, so the pages come out consistent.
+  1-based, zero-padded). Lock the persona voice and visual design. Also write the
+  **`research.json` skeleton** (see **Research artifact**): the sources you
+  consulted to choose the structure, `structure.rationale`, and an empty `{}`
+  entry per concept. Do **not** write any concept body and do **not** change any
+  concept's status. This fixes the template every later page reuses, so the pages
+  come out consistent.
 - **One concept** (prompt says "build EXACTLY ONE concept page …") — build only the
   named concept at the given path, against the **existing** scaffolded assets (reuse
   the shared CSS / pager / widget engine; do not restyle the book or touch any other
-  page). Honor its `brief`/`notes`/`unit`/`cos`/`kind`. Then set **only** that
-  concept's `file` + `status:"ready"` and make sure `index.html` links it.
+  page). **Read `research.json` first** — the shared sources and neighboring
+  concepts' claims are what give a fresh-context step cross-page consistency —
+  then record your distilled findings under `concepts.<id>` **before** writing
+  the page's HTML. Honor its `brief`/`notes`/`unit`/`cos`/`kind`. Then set **only**
+  that concept's `file` + `status:"ready"` and make sure `index.html` links it.
 - **Revise** — the in-place revision path (below), scoped to one book.
 
 Because each step re-reads `book.json` from disk, the staged build is **resumable**:
@@ -69,6 +75,7 @@ those are a guided-mode plan awaiting the author's approval.
   ```
   <root>/books/rust-programming/
     book.json                 # the manifest (you read + update this)
+    research.json             # the distilled research artifact (see Research artifact)
     index.html                # cover + table of contents (the landing page)
     concepts/01-ownership.html # one page per concept
     concepts/02-borrowing.html
@@ -147,6 +154,74 @@ Field rules:
 - `notes`: optional, only meaningful while `status` is `"requested"` — see
   the schema note above. Remove it once the book is `"ready"`.
 
+## Research artifact — `research.json` (required on every build)
+
+Beside `book.json`, persist what the build **learned** as `research.json` — the
+durable, voice-free record the prose is rendered from. Design rationale and the
+consumer roadmap live in `docs/research-prose-split.md` (this plugin); the
+contract you must honor is here. **The rule: nothing appears in a page that
+isn't in the artifact** — if writing a page reveals a gap, fetch, record the
+claim/source here first, then use it.
+
+```json
+{
+  "schema": 1,
+  "researched": "2026-07-17",
+  "sources": [
+    { "id": "src-trpl-ch4",
+      "url": "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html",
+      "title": "The Rust Programming Language, ch. 4",
+      "kind": "official-docs", "accessed": "2026-07-17" }
+  ],
+  "structure": {
+    "rationale": "Why these concepts, in this order — 2–4 sentences.",
+    "audience": "Working programmers new to Rust."
+  },
+  "concepts": {
+    "ownership": {
+      "researched": "2026-07-17",
+      "claims": [
+        { "text": "Assigning a String moves it; the original binding is invalidated at compile time.",
+          "sources": ["src-trpl-ch4"] }
+      ],
+      "snippets": [
+        { "lang": "rust",
+          "code": "let s1 = String::from(\"hi\");\nlet s2 = s1; // s1 is moved",
+          "note": "verified against Rust 1.79", "sources": ["src-trpl-ch4"] }
+      ],
+      "pitfalls": ["Beginners expect a copy; only Copy types copy on assignment."],
+      "furtherReading": ["src-trpl-ch4"]
+    }
+  },
+  "volatile": ["Rust version numbers", "stdlib API signatures"]
+}
+```
+
+Rules:
+
+- **Distill, don't dump.** Record what you *extracted* — never raw fetched
+  pages, no quotes longer than a sentence or two. Target the same order of
+  magnitude as the book's prose (~100–300 KB max); if it's heading past that,
+  you're writing transcripts, not research.
+- **Voice-free by construction.** Claims read the same whether the book is
+  narrated by Feynman or a drill sergeant — the persona lives only in the
+  prose. This is the invariant that makes a future re-voice pass safe.
+- **`concepts` is keyed by concept id** (`book.json`'s `concepts[].id`), not by
+  file path — ids survive renumbering, files don't.
+- **Every claim cites ≥1 source id** from `sources[]` (deduplicated,
+  book-wide). If you genuinely couldn't source a claim, either keep it out of
+  the book or mark it `"sources": []` explicitly so a later verify pass can
+  find it.
+- **`snippets[]`** hold code you verified or took from a primary source, with
+  version notes — the ground truth the pages' examples render from.
+- **`volatile`** lists what will go stale first (versions, APIs, prices) — a
+  future refresh pass reads this to know where to look.
+- **Per-concept `researched` dates**: a pass that re-researches one concept
+  bumps only that concept's date.
+- **Legacy books** (no `research.json`) are fine — never block on its absence.
+  When a `revising` pass touches a legacy book, backfill entries for the
+  concepts you actually touch; don't mass-backfill the rest.
+
 ## Procedure (building a book)
 
 1. **Read `book.json`.** Note the topic, the persona id, any seed concepts the
@@ -166,13 +241,18 @@ Field rules:
    matter for the topic and order them so each builds on the last. **Include every
    `source: "user"` concept**, plus the ones you judge essential. (For a focused
    "expand" request, generate only the requested concept.)
-5. **Apply the theme** (see Design, below). The book's _structure_ is consistent
+5. **Write `research.json` before any prose** (see **Research artifact**):
+   the deduplicated `sources[]`, the `structure.rationale` for the outline you
+   just chose, and a per-concept entry of claims/snippets/pitfalls. The pages
+   are then written *from* this artifact — the prose pass should need no new
+   web fetches; when it does, record first, then use.
+6. **Apply the theme** (see Design, below). The book's _structure_ is consistent
    across the library; its _skin_ comes from the selected **theme** — write the
    theme's `tokens`/`fonts` into `book.css`'s `:root {}` and paint the page from
    its `background`, then add only topic-specific flourishes _within_ that palette.
    Don't invent a palette from scratch: the theme is the skin, the topic is the
    flourish. (If `theme` is absent, use a neutral, legible house look.)
-6. **Write the pages:**
+7. **Write the pages** (from the research artifact):
    - `assets/book.css` — the full stylesheet (self-contained, no external CDNs).
    - `concepts/NN-slug.html` — one page per concept (`NN` = 01, 02, … in order).
    - `index.html` — the cover + table of contents linking each concept. Give the
@@ -182,16 +262,17 @@ Field rules:
      gotchas, the "30-second" summary).
    - Draw explanatory diagrams as **inline SVG**; for real/illustrative images you
      can't draw, leave an **image slot** placeholder (see Images & diagrams).
-7. **Update `book.json`** — set each concept's `file` + `status: "ready"`, the
+8. **Update `book.json`** — set each concept's `file` + `status: "ready"`, the
    book `status: "ready"`, a one-line `summary`, and any **image slots** in
    `images[]` (id + prompt + file).
-8. Optionally render a `cover.png` (used by the gallery; otherwise it falls back to
+9. Optionally render a `cover.png` (used by the gallery; otherwise it falls back to
    a gradient). Tell the user to press ⌘R / reopen the book to see the update.
 
 ## Expanding a concept (the "wherever I need" path)
 
 The app queues a new concept by appending `{ "status": "requested", "source":
-"user", … }` to `book.json`. To fulfil it: research that one concept, write its
+"user", … }` to `book.json`. To fulfil it: research that one concept, record its
+entry (claims/snippets/sources) under `concepts.<id>` in `research.json`, write its
 `concepts/NN-slug.html` (next number in sequence), **add it to the table of
 contents in `index.html`** and into the prev/next chain, then flip its status to
 `ready`. Don't regenerate the whole book — just wire in the new page. If the new
@@ -218,6 +299,10 @@ wants changed (it may be empty — "just tighten what's there"). Your job is to
    whichever fits better.
 3. **Re-research only what the notes touch, or anything you suspect is stale**
    (versions, APIs, facts) — don't re-run the entire research pass speculatively.
+   Mirror what you learn into `research.json` (see **Research artifact**): update
+   exactly the entries you touch — changed claims, new sources, that concept's
+   `researched` date — and leave the rest alone. On a legacy book with no
+   `research.json`, backfill entries for just the concepts this pass touches.
 4. **Keep what's good.** Untouched concept pages, the design/skin, and
    `assets/book.css`/`book.js` should generally survive unchanged unless the
    notes (or a topic/persona change) call for a broader revision. Preserve every

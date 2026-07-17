@@ -29,6 +29,12 @@ of a human noticing mojibake or a broken page-fold after the fact:
                    disk. Non-fatal: a book's text can legitimately be "ready"
                    before its art is dropped (build-library.py falls back to
                    a gradient cover for exactly this case).
+  research         research.json (the research/prose split's durable research
+                   artifact — see docs/research-prose-split.md). Missing file
+                   is a [warning] (legacy book, backfilled lazily); a present
+                   but malformed file is an error; a "ready" concept with no
+                   (or an empty) entry, an unsourced claim, or a claim citing
+                   an unknown source id are [warning]s.
 
 Every finding has a severity, "error" (default) or "warning" — only an
 "error"-severity finding fails the run (see Finding.severity).
@@ -292,6 +298,77 @@ def check_image_slots(book_dir: Path, book_id: str, findings: list):
                 severity="warning"))
 
 
+def check_research(book_dir: Path, book_id: str, findings: list):
+    rj = book_dir / "research.json"
+    if not rj.is_file():
+        findings.append(Finding(book_id, "research", "research.json",
+            "missing — legacy book built before the research/prose split; "
+            "consumers fall back to full re-research, and a revising pass "
+            "backfills entries for the concepts it touches",
+            severity="warning"))
+        return
+    try:
+        data = json.loads(rj.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        findings.append(Finding(book_id, "research", "research.json", f"invalid JSON: {e}"))
+        return
+    if not isinstance(data, dict):
+        findings.append(Finding(book_id, "research", "research.json",
+            "top level must be an object"))
+        return
+
+    sources = data.get("sources")
+    concepts = data.get("concepts")
+    if not isinstance(sources, list):
+        findings.append(Finding(book_id, "research", "research.json",
+            '"sources" must be a list of {id, url, ...} objects'))
+        sources = []
+    if not isinstance(concepts, dict):
+        findings.append(Finding(book_id, "research", "research.json",
+            '"concepts" must be an object keyed by concept id'))
+        concepts = {}
+
+    source_ids = {s.get("id") for s in sources if isinstance(s, dict) and s.get("id")}
+
+    for cid, entry in concepts.items():
+        if not isinstance(entry, dict):
+            findings.append(Finding(book_id, "research", "research.json",
+                f'concept entry {cid!r} must be an object (got {type(entry).__name__})'))
+            continue
+        for claim in entry.get("claims", []) if isinstance(entry.get("claims"), list) else []:
+            if not isinstance(claim, dict):
+                continue
+            cites = claim.get("sources")
+            text = str(claim.get("text", ""))[:60]
+            if not cites:
+                findings.append(Finding(book_id, "research", "research.json",
+                    f'concept {cid!r} has an unsourced claim ({text!r}…) — '
+                    "flagged for a later verify pass", severity="warning"))
+            else:
+                unknown = [s for s in cites if s not in source_ids]
+                if unknown:
+                    findings.append(Finding(book_id, "research", "research.json",
+                        f'concept {cid!r} claim ({text!r}…) cites unknown source '
+                        f'id(s) {unknown} — not in sources[]', severity="warning"))
+
+    # A "ready" concept in book.json should have a non-empty research entry.
+    bj = book_dir / "book.json"
+    if bj.is_file():
+        try:
+            book = json.loads(bj.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return  # check_book_json already reports this as an error
+        for c in book.get("concepts", []):
+            if c.get("status") != "ready":
+                continue
+            cid = c.get("id")
+            if not concepts.get(cid):
+                findings.append(Finding(book_id, "research", "research.json",
+                    f'concept {cid!r} is "ready" but has no (or an empty) entry '
+                    "under concepts — the build skipped the research-artifact "
+                    "contract", severity="warning"))
+
+
 CHECKS = [
     check_charset,
     check_self_contained,
@@ -301,6 +378,7 @@ CHECKS = [
     check_mobile_fallback,
     check_book_json,
     check_image_slots,
+    check_research,
 ]
 
 

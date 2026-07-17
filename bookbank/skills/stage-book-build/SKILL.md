@@ -72,8 +72,12 @@ this skill.
 **After every step, re-read `book.json` from disk and verify the step
 actually did its job** (file-state truth, not the process's exit code alone):
 
-- `scaffold` → `index.html` now exists, no concept's `status`/`file` changed.
-- `concept` → that concept's `status` is now `"ready"` and its `file` exists.
+- `scaffold` → `index.html` now exists, no concept's `status`/`file` changed,
+  and `research.json` exists beside `book.json` with a `concepts` entry (even
+  an empty `{}`) for every concept.
+- `concept` → that concept's `status` is now `"ready"`, its `file` exists, and
+  `research.json`'s `concepts.<id>` entry is non-empty (the step recorded its
+  research before writing prose).
 - `revise` → book `status` is now `"ready"` and `revisionNotes` is cleared.
 
 **On failure** (the process errors, times out, or the verification above
@@ -92,26 +96,28 @@ On success, move to the next step. Chain through the whole computed plan.
 ## Step prompts (verbatim contracts — do not paraphrase)
 
 These mirror `Model.swift`'s `scaffoldPrompt`/`conceptPrompt`/`revisePrompt`
-exactly, and satisfy the `write-book` skill's own "Staged (orchestrated)
-builds" section — that section is written assuming a runner will send
-exactly these scoped instructions.
+(plus the `research.json` clauses from `docs/research-prose-split.md` — the
+app's prompts predate the research artifact, but the `write-book` skill
+contract requires it either way, so both runners produce it), and satisfy the
+`write-book` skill's own "Staged (orchestrated) builds" section — that section
+is written assuming a runner will send exactly these scoped instructions.
 
 **Scaffold** (`bookID` = the book's id):
 
 ```
-Use the write-book skill to SCAFFOLD (not fully build) the BookBank book with id "<bookID>" at books/<bookID>/. Read its book.json — topic, persona, theme, and (if present) courseMeta, courseOutcomes, designDirection, voiceSample. Create ONLY the shared shell every page will reuse: (1) assets/ — the stylesheet(s) plus a theme skin matching designDirection, the two-page-spread pager (assets/book.js), and any interactive/widget engine the concepts will share; (2) index.html — the cover + table of contents linking every concept in book.json order to concepts/NN-<concept id>.html (NN = the concept's 1-based position, zero-padded), with a cover-art image slot. Lock the persona voice and the visual design. Do NOT write any concept page body and do NOT change any concept's status — leave every concept requested or proposed as it is. Then stop. Do not ask questions.
+Use the write-book skill to SCAFFOLD (not fully build) the BookBank book with id "<bookID>" at books/<bookID>/. Read its book.json — topic, persona, theme, and (if present) courseMeta, courseOutcomes, designDirection, voiceSample. Create ONLY the shared shell every page will reuse: (1) assets/ — the stylesheet(s) plus a theme skin matching designDirection, the two-page-spread pager (assets/book.js), and any interactive/widget engine the concepts will share; (2) index.html — the cover + table of contents linking every concept in book.json order to concepts/NN-<concept id>.html (NN = the concept's 1-based position, zero-padded), with a cover-art image slot; (3) research.json — the research-artifact skeleton per the skill's Research artifact section: the sources you consulted for the structure, structure.rationale, and an empty {} concepts entry per concept. Lock the persona voice and the visual design. Do NOT write any concept page body and do NOT change any concept's status — leave every concept requested or proposed as it is. Then stop. Do not ask questions.
 ```
 
 **One concept** (`bookID`, `conceptID`, `file` = `concepts/NN-<conceptID>.html`):
 
 ```
-Use the write-book skill to build EXACTLY ONE concept page and nothing else. Book id "<bookID>", concept id "<conceptID>", at books/<bookID>/. Read book.json and this concept's brief, notes, unit, cos and kind. Build against the EXISTING assets/ and the design already scaffolded — reuse the shared stylesheet, pager and widget engine; do not restyle the book or touch any other page. Research the web for accurate content. Write the page to <file>, in the locked persona voice, honoring the brief and any author notes; if kind is "exam-prep" or "cheatsheet", follow that format. Then set ONLY this concept's file to "<file>" and status to "ready" in book.json (leave every other concept untouched) and make sure index.html links it. Then stop. Do not ask questions; if the topic is too vague, note it in the book's summary and still write the best page you can.
+Use the write-book skill to build EXACTLY ONE concept page and nothing else. Book id "<bookID>", concept id "<conceptID>", at books/<bookID>/. Read book.json and this concept's brief, notes, unit, cos and kind, and read research.json for the shared sources and neighboring concepts' claims. Build against the EXISTING assets/ and the design already scaffolded — reuse the shared stylesheet, pager and widget engine; do not restyle the book or touch any other page. Research the web for accurate content and record your distilled findings (claims, snippets, pitfalls, sources) under research.json's concepts."<conceptID>" entry BEFORE writing the page, per the skill's Research artifact section. Write the page to <file>, in the locked persona voice, honoring the brief and any author notes; if kind is "exam-prep" or "cheatsheet", follow that format. Then set ONLY this concept's file to "<file>" and status to "ready" in book.json (leave every other concept untouched) and make sure index.html links it. Then stop. Do not ask questions; if the topic is too vague, note it in the book's summary and still write the best page you can.
 ```
 
 **Revise** (`bookID`):
 
 ```
-Use the write-book skill to revise IN PLACE the BookBank book with id "<bookID>" at books/<bookID>/: read its existing pages, its revisionNotes, and any comments.json beside book.json — improve/add content and apply each open editorial comment to its anchored block, then mark that comment resolved, rather than rebuilding from scratch. Then set the book's status to "ready" and clear revisionNotes. Then stop. Do not ask questions.
+Use the write-book skill to revise IN PLACE the BookBank book with id "<bookID>" at books/<bookID>/: read its existing pages, its revisionNotes, and any comments.json beside book.json — improve/add content and apply each open editorial comment to its anchored block, then mark that comment resolved, rather than rebuilding from scratch. Mirror anything you re-research into research.json per the skill's Research artifact section (on a legacy book with no research.json, backfill entries for just the concepts this pass touches). Then set the book's status to "ready" and clear revisionNotes. Then stop. Do not ask questions.
 ```
 
 A concept's `brief`/`notes`/`unit`/`cos`/`kind` fields are the same optional
