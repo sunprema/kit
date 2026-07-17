@@ -436,6 +436,15 @@ def voice_filters(entries):
     return "\n        ".join(btns)
 
 
+def asset_v():
+    """Short content hash of the shelf's CSS+JS, used as a ?v= cache-buster on
+    their URLs (in index.html and the service worker's precache list). The
+    shelf HTML is network-first but assets are cache-first — without versioned
+    URLs, every publish pairs fresh markup with stale CSS/JS on first view
+    (real bug this caught: unstyled .card-link overlay, cards not clickable)."""
+    return hashlib.sha1((LIBRARY_CSS + LIBRARY_JS).encode("utf-8")).hexdigest()[:10]
+
+
 def render_index(entries):
     cards = "\n".join(card_html(e) for e in entries)
     filters = voice_filters(entries)
@@ -451,7 +460,7 @@ def render_index(entries):
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 <link rel="preconnect" href="/" />
-<link rel="stylesheet" href="assets/library.css" />
+<link rel="stylesheet" href="assets/library.css?v={asset_v()}" />
 </head>
 <body>
 <header class="hero">
@@ -476,7 +485,7 @@ def render_index(entries):
 <footer>
   <p>Built with <strong>BookBank</strong> · {count} book{'s' if count != 1 else ''} · researched and written page by page.</p>
 </footer>
-<script src="assets/library.js"></script>
+<script src="assets/library.js?v={asset_v()}"></script>
 </body>
 </html>
 """
@@ -800,8 +809,9 @@ var VERSION = 'bookbank-@VERSION@';
 // Persistent cache holding user-requested full-book downloads (the shelf's
 // "⤓ Offline" button fills it). Never dropped on version bumps.
 var OFFLINE = 'bookbank-offline';
-var SHELL = ['./', 'assets/library.css', 'assets/library.js', 'catalog.json',
-             'manifest.webmanifest', 'assets/icon-192.png', 'assets/icon-512.png'];
+var SHELL = ['./', 'assets/library.css?v=@ASSETV@', 'assets/library.js?v=@ASSETV@',
+             'catalog.json', 'manifest.webmanifest',
+             'assets/icon-192.png', 'assets/icon-512.png'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(SHELL); })
@@ -938,7 +948,8 @@ def main():
     catalog_hash = hashlib.sha1(
         json.dumps(entries, sort_keys=True).encode("utf-8")).hexdigest()[:10]
     (out / "sw.js").write_text(
-        SERVICE_WORKER.replace("@VERSION@", catalog_hash), encoding="utf-8")
+        SERVICE_WORKER.replace("@VERSION@", catalog_hash)
+                      .replace("@ASSETV@", asset_v()), encoding="utf-8")
     for name, size in (("icon-192.png", 192), ("icon-512.png", 512),
                        ("apple-touch-icon.png", 180)):
         write_png(out / "assets" / name, size)
