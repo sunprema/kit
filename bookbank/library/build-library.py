@@ -181,6 +181,26 @@ def png_size(path: Path):
     return None, None
 
 
+def jpeg_size(path: Path):
+    """(width, height) of a baseline/progressive JPEG from its SOF marker,
+    without any deps. Returns (None, None) on anything unexpected."""
+    try:
+        data = path.read_bytes()
+        i = 2
+        while i + 9 < len(data):
+            if data[i] != 0xFF:
+                break
+            marker = data[i + 1]
+            if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+                h = int.from_bytes(data[i + 5:i + 7], "big")
+                w = int.from_bytes(data[i + 7:i + 9], "big")
+                return w, h
+            i += 2 + int.from_bytes(data[i + 2:i + 4], "big")
+    except Exception:
+        pass
+    return None, None
+
+
 def make_share_jpeg(cover_fs: Path, dst_fs: Path):
     """Downscale + compress a cover into a small JPEG for strict unfurlers.
     WhatsApp (and some others) refuse preview images over a few hundred KB, so
@@ -266,16 +286,23 @@ def inject_book_og(out: Path, entry, base_url):
     image_url = None
     size = (None, None)
     if cover:
-        # Prefer a small compressed share JPEG (WhatsApp-safe); fall back to the
-        # full cover if sips isn't available.
+        # Prefer a small compressed share JPEG (WhatsApp-safe). REUSE one that
+        # already exists rather than re-encoding: `sips` only exists on macOS,
+        # and the books repo's publish-on-merge bot (Ubuntu) must regenerate
+        # byte-identical pages or every book merge spawns a drift commit.
         share_rel = f"books/{entry['id']}/assets/img/og-share.jpg"
-        ok, w, h = make_share_jpeg(out / cover, out / share_rel)
-        if ok:
+        share_fs = out / share_rel
+        if share_fs.is_file():
             image_url = f"{base_url}/{share_rel}"
-            size = (w, h)
+            size = jpeg_size(share_fs)
         else:
-            image_url = f"{base_url}/{cover}"
-            size = png_size(out / cover)
+            ok, w, h = make_share_jpeg(out / cover, share_fs)
+            if ok:
+                image_url = f"{base_url}/{share_rel}"
+                size = (w, h)
+            else:
+                image_url = f"{base_url}/{cover}"
+                size = png_size(out / cover)
     block = og_block(
         title=entry["title"],
         description=entry.get("summary") or SITE_TAGLINE,
