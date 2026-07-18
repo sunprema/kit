@@ -38,8 +38,9 @@ instead of one long single-pass session.
 
 - **Scaffold** (prompt says "SCAFFOLD (not fully build) …") — create the shared
   **shell only**: `assets/` (the stylesheet + a theme skin matching
-  `designDirection`, the two-page-spread pager `book.js`, and any interactive/widget
-  engine the pages will share) and `index.html` (cover + table of contents linking
+  `designDirection`, the two-page-spread pager `book.js`, and — if the concepts
+  will use canvas widgets — the vendored shared runtime + an `assets/widgets.js`
+  stub (see **Interactive 2D widgets**)) and `index.html` (cover + table of contents linking
   each concept **in book.json order** to `concepts/NN-<concept id>.html`, `NN` =
   1-based, zero-padded). Lock the persona voice and visual design. Also write the
   **`research.json` skeleton** (see **Research artifact**): the sources you
@@ -82,6 +83,8 @@ those are a guided-mode plan awaiting the author's approval.
     cheatsheet.html           # a one-page quick reference
     assets/book.css           # the book's bespoke stylesheet
     assets/book.js            # optional: small, self-contained interactivity
+    assets/widgets.js         # optional: the book's canvas-widget definitions
+    assets/vendor/book-widgets.js  # optional: the shared widget runtime (vendored)
     assets/img/*              # images downloaded/created at build time (offline)
     cover.png                 # optional: a generated cover the gallery shows
   ```
@@ -502,6 +505,7 @@ Pager reference (`assets/book.js`) — adapt, but keep the contract:
       total = 1; i = 0;
       var n0 = document.querySelector('.book-pageno');
       if(n0) n0.textContent = '';
+      relayout();
       return;
     }
     var W = vp.clientWidth, gap = Math.round(W * 0.08), colW = (W - gap) / 2;
@@ -512,7 +516,11 @@ Pager reference (`assets/book.js`) — adapt, but keep the contract:
     total = Math.max(1, Math.ceil(cols / 2));
     i = Math.min(i, total - 1);
     render();
+    relayout();
   }
+  // REQUIRED after every layout(): canvas widgets (the shared book-widgets.js
+  // runtime) and 3D figures re-fit + redraw on this event.
+  function relayout(){ window.dispatchEvent(new CustomEvent('bookbank:relayout')); }
   function render(){
     if(mobile()) return;               // natural document flow — nothing to translate
     leaf.style.transform = 'translateX(' + (-i * spread) + 'px)';
@@ -740,6 +748,74 @@ Wherever a real/generated image would genuinely help, create an **image slot**:
 
 Keep slots **purposeful** — one strong illustration per concept at most; lean on
 SVG for the explanatory diagrams.
+
+## Interactive 2D widgets — the shared runtime (`book-widgets.js`)
+
+When a concept genuinely earns interaction — a parameter to drag, a process to
+watch converge, a quantity to sweep — build it as a **canvas widget** on the
+plugin's shared runtime instead of writing lifecycle machinery from scratch.
+The runtime is the verified engine extracted from `fun-with-calculus` and
+`spacetime`: DOM-scan boot with per-widget failure isolation, one shared
+dt-clamped rAF loop that pauses offscreen (IntersectionObserver), reduced-motion
+handling, DPR-correct canvas fitting re-fit on the pager's relayout, and
+theme-token colors. Full API + a worked example:
+`${CLAUDE_PLUGIN_ROOT}/widgets/README.md`. (Static explanatory diagrams stay
+inline SVG; a widget is for interaction/animation, not decoration.)
+
+**Vendor it per book** (books stay self-contained; same rule as three.js):
+
+```bash
+mkdir -p "<book-dir>/assets/vendor"
+cp "$CLAUDE_PLUGIN_ROOT/widgets/book-widgets.js" "<book-dir>/assets/vendor/"
+```
+
+Load it before the book's own widget definitions, as classic scripts:
+
+```html
+<script src="../assets/vendor/book-widgets.js"></script>
+<script src="../assets/widgets.js"></script>   <!-- your BookWidgets.register(...) calls -->
+```
+
+**Markup contract** — a placeholder the runtime enhances:
+
+```html
+<figure class="figbox" data-widget="secant" data-fn="square" data-anchor="deriv-fig1">
+  <canvas></canvas>
+  <div class="controls">…sliders/buttons…</div>
+  <p class="readout"></p>
+  <figcaption>Always present — it's the reduced-motion/failure fallback text.</figcaption>
+</figure>
+```
+
+`data-widget` picks the registered init; other `data-*` are the widget's
+parameters (`W.params(box)` returns them with numbers coerced). Size the canvas
+in `book.css` exactly like an image slot — the page can't scroll, so an aspect
+box + hard cap is mandatory, and the failure class must hide a dead canvas:
+
+```css
+.figbox{ break-inside:avoid; }
+.figbox canvas{ width:100%; aspect-ratio:16/9; height:auto; max-height:52vh; display:block; }
+.figbox.widget-failed canvas, .figbox.widget-failed .controls{ display:none; }
+```
+
+**Widget rules (all required):** draw a static first frame before any
+animation (that's the reduced-motion and print rendering); make ticks
+time-based (`tick(dt)`), never frame-counted; redraw via `W.onRelayout(draw)`
+and treat `Plot.fit()` returning false as "skip this frame"; **never bind
+arrow keys or hijack scroll** — keys belong to the pager, pointer interaction
+stays inside the canvas (`W.drag` handles capture and propagation); use
+`W.rng(seed)` for decoration, never `Math.random`, so renders are
+reproducible. One widgets file per book (`assets/widgets.js`); keep each
+widget's math honest — the research artifact's claims/snippets are what the
+widget visualizes.
+
+**Pager contract:** the runtime re-fits canvases on the `bookbank:relayout`
+event, which `assets/book.js` **must dispatch after every `layout()`** — the
+pager reference below does this; keep that line when adapting it.
+
+Verify like any interactive page: open from `file://`, confirm the widget
+draws, animates only on its visible spread, and that arrow keys still turn
+pages with the canvas focused.
 
 ## 3D figures (three.js) — offline-safe interactive visuals
 

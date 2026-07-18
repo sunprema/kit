@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>book-widgets.js — demo & self-test</title>
+<style>
+  :root{ --bg:#faf7f1; --ink:#1c1a17; --ink-soft:#6b6459; --accent:#b45309;
+         --rule:#d8d2c6; --code-bg:#f0ece3; }
+  body{ margin:0; padding:2rem; background:var(--bg); color:var(--ink);
+        font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; max-width:760px; }
+  .figbox{ border:1px solid var(--rule); border-radius:10px; padding:12px; margin:1rem 0; }
+  .figbox canvas{ width:100%; aspect-ratio:16/9; height:auto; max-height:52vh; display:block; }
+  .figbox.widget-failed canvas,.figbox.widget-failed .controls{ display:none; }
+  .readout{ font:12px "SF Mono",Menlo,monospace; color:var(--ink-soft); min-height:1.2em; }
+  #status{ font:13px "SF Mono",Menlo,monospace; white-space:pre-line; padding:12px;
+           background:var(--code-bg); border-radius:8px; }
+</style>
+</head>
+<body>
+<h1>book-widgets.js — demo &amp; self-test</h1>
+<div id="status">running…</div>
+
+<figure class="figbox" data-widget="sine" data-freq="2" data-anchor="demo-sine">
+  <canvas></canvas>
+  <div class="controls"><button type="button" class="btn play">▶ Play</button></div>
+  <p class="readout"></p>
+  <figcaption>Traveling sine wave — Plot, anim(dt), theme colors, params.</figcaption>
+</figure>
+
+<figure class="figbox" data-widget="does-not-exist" data-anchor="demo-unknown">
+  <canvas></canvas>
+  <figcaption>Unregistered widget — must be left alone, page unharmed.</figcaption>
+</figure>
+
+<figure class="figbox" data-widget="broken" data-anchor="demo-broken">
+  <canvas></canvas>
+  <figcaption>This widget throws in init — the box must get .widget-failed and the page must survive.</figcaption>
+</figure>
+
+<script src="book-widgets.js"></script>
+<script>
+(function(){
+  var results = [];
+  function check(name, ok){ results.push((ok ? 'PASS' : 'FAIL') + ' ' + name); }
+
+  // sine: exercises Plot, params, theme, anim, drag, relayout
+  var phase = 0, ticked = 0, drew = 0;
+  BookWidgets.register('sine', function(box, W){
+    var cv = box.querySelector('canvas');
+    var p = W.params(box);
+    check('params: data-freq coerced to number 2', p.freq === 2);
+    check('params: data-anchor excluded', !('anchor' in p));
+    var C = W.theme();
+    check('theme: --accent resolved', C.accent === '#b45309');
+    var P = W.Plot(cv, { xr:[0, 6.283], yr:[-1.4, 1.4] });
+    function draw(){
+      if(!P.fit()) return;
+      drew++;
+      P.clear(); P.axes({});
+      P.curve(function(x){ return Math.sin(p.freq * x + phase); }, C.accent, 2.6);
+      P.dot(3.14, Math.sin(p.freq * 3.14 + phase));
+      box.querySelector('.readout').textContent = 'phase = ' + W.fmt(phase, 2);
+    }
+    var eng = W.anim(box, function(dt){ ticked++; phase += dt * 2; draw(); });
+    box.querySelector('.btn.play').addEventListener('click', function(){ eng.toggle(true); });
+    W.drag(cv, function(x, y){ phase = P.ix(x); draw(); });
+    W.onRelayout(draw);
+    draw();
+    eng.start(true);
+    window.__sineEngine = eng;
+  });
+
+  BookWidgets.register('broken', function(){ throw new Error('intentional'); });
+
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      var sine = document.querySelector('[data-widget="sine"]');
+      var cv = sine.querySelector('canvas');
+      check('boot: canvas backing store sized (DPR fit)', cv.width > 0 && cv.height > 0);
+      check('draw: static frame rendered', drew >= 1);
+      check('anim: dt ticks arrived', ticked >= 3);
+      check('anim: running()', window.__sineEngine.running() === true);
+      window.__sineEngine.stop();
+      var t = ticked;
+      setTimeout(function(){
+        check('anim: stop() halts ticks', ticked === t);
+        check('failure isolation: .widget-failed set', /widget-failed/.test(document.querySelector('[data-widget="broken"]').className));
+        check('unknown widget: untouched', !document.querySelector('[data-widget="does-not-exist"]').__bwDone);
+        // relayout contract: pager-style event triggers refit/redraw
+        var d = drew;
+        window.dispatchEvent(new CustomEvent('bookbank:relayout'));
+        check('relayout: bookbank:relayout redraws', drew > d);
+        // pixels actually painted (accent curve on the canvas)
+        var px = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data, painted = false;
+        for(var i = 3; i < px.length; i += 4){ if(px[i] > 0){ painted = true; break; } }
+        check('pixels: canvas non-blank', painted);
+        check('api: version 1', BookWidgets.version === 1);
+        var fails = results.filter(function(r){ return r.indexOf('FAIL') === 0; }).length;
+        document.getElementById('status').textContent =
+          results.join('\n') + '\n' + (fails ? fails + ' FAILURE(S)' : 'ALL ' + results.length + ' CHECKS PASSED');
+      }, 250);
+    }, 400);
+  });
+})();
+</script>
+</body>
+</html>
