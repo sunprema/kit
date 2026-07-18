@@ -1,0 +1,41 @@
+{
+  "background" : {
+    "css" : "radial-gradient(1100px 640px at 50% -12%, #ded8c8 0%, rgba(222,216,200,0) 60%), linear-gradient(180deg, #cfc9ba 0%, #bcb6a4 100%)",
+    "kind" : "paper",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif",
+    "--font-display" : "\"Avenir Next\",\"Segoe UI\",Helvetica,Arial,sans-serif",
+    "--font-mono" : "\"SF Mono\",\"JetBrains Mono\",Menlo,Consolas,monospace"
+  },
+  "id" : "binder",
+  "mood" : "A spiral-bound practice notebook open on a music stand. The desk shows through as a warm gray-taupe ground; the two leaves are cream 'practice-page' paper carried by --paper/--paper-2. Two signatures define this look and must be reproduced structurally: (1) a spiral-ring BINDING running down the centre spine — render .book-spine::before as a vertical repeating-linear-gradient of dark/light rings masked to little punch-holes, over a soft shadow gutter; (2) faint horizontal RULED LINES on the leaves — a repeating-linear-gradient of ~1px hairlines every ~34px in rgba(70,60,45,.045) laid over the cream paper of .book-viewport (rule the paper, never the desk). Accents are red-pen (--accent) with hairline --edge/--rule borders on cards and tabs. Clean practical sans headings, monospaced for tabs/code. The overall feel: a well-worn, legible reference workbook you keep open while you practice — utilitarian, warm, never ornate.",
+  "name" : "Binder",
+  "tagline" : "Spiral-bound practice notebook — cream ruled leaves, red-pen accent",
+  "tokens" : {
+    "--accent" : "#b0461f",
+    "--accent-2" : "#944118",
+    "--at" : "#2f6bb0",
+    "--bg" : "#fbf9f3",
+    "--bg-2" : "#f3efe4",
+    "--cm" : "#8b857a",
+    "--code-bg" : "#f1ede2",
+    "--desk" : "#cfc9ba",
+    "--desk-2" : "#bcb6a4",
+    "--edge" : "#e6e0d3",
+    "--en" : "#2f6f4f",
+    "--fn" : "#2f6f4f",
+    "--ink" : "#26232b",
+    "--ink-soft" : "#6f6a73",
+    "--kw" : "#b0461f",
+    "--lif" : "#b0461f",
+    "--mac" : "#a9541a",
+    "--num" : "#b0461f",
+    "--paper" : "#fbf9f3",
+    "--paper-2" : "#ffffff",
+    "--rule" : "#e2ddd0",
+    "--str" : "#2f6f4f",
+    "--ty" : "#7a5cc0"
+  }
+}
