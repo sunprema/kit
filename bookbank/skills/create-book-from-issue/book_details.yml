@@ -30,14 +30,18 @@ body:
     id: persona
     attributes:
       label: Persona
-      description: A narrator voice — an existing persona id (e.g. "feynman"), or describe one in free text (e.g. "in the voice of a excited lab-partner").
+      description: |
+        A narrator voice — pick an existing id below, or describe your own in free text (e.g. "an excited lab-partner"). Leave blank for the default voice.
+        **Available:** `clear-mentor` (patient senior engineer, example-first) · `feynman` (first-principles, playful, intuition-first) · `isaac-newton` (principled natural philosopher) · `the-crafter` (precise teacher, "Crafting Interpreters" style) · `the-guitarist` (practical guitar master — calm, no fluff)
     validations:
       required: false
   - type: input
     id: theme
     attributes:
       label: Theme
-      description: A visual look — an existing theme id (e.g. "blueprint"), or describe one in free text (e.g. "dark academia, warm lamplight").
+      description: |
+        A visual look — pick an existing id below, or describe your own in free text (e.g. "dark academia, warm lamplight"). Leave blank for a neutral house look.
+        **Available:** `binder` (spiral-bound practice notebook — cream ruled leaves, red-pen accent) · `blueprint` (cyan-on-navy drafting grid, technical) · `chalkboard` (slate board and chalk — math & first principles) · `codex` (warm aged paper — a classic printed book) · `observatory` (deep space, glowing ink — built for wonder)
     validations:
       required: false
   - type: textarea
