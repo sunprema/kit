@@ -86,7 +86,7 @@ those are a guided-mode plan awaiting the author's approval.
     assets/widgets.js         # optional: the book's canvas-widget definitions
     assets/vendor/book-widgets.js  # optional: the shared widget runtime (vendored)
     assets/img/*              # images downloaded/created at build time (offline)
-    cover.png                 # optional: a generated cover the gallery shows
+    cover.webp                # optional: a generated cover the gallery shows
   ```
 - **Personas & themes — a 3-tier override cascade, first match wins:**
   1. `<root>/personas|themes/<id>.json` — per-clone local override. Never
@@ -268,7 +268,7 @@ Rules:
 8. **Update `book.json`** — set each concept's `file` + `status: "ready"`, the
    book `status: "ready"`, a one-line `summary`, and any **image slots** in
    `images[]` (id + prompt + file).
-9. Optionally render a `cover.png` (used by the gallery; otherwise it falls back to
+9. Optionally render a `cover.webp` (used by the gallery; otherwise it falls back to
    a gradient). Tell the user to press ⌘R / reopen the book to see the update.
 
 ## Expanding a concept (the "wherever I need" path)
@@ -639,8 +639,8 @@ never hotlink a remote URL in `<img>`. Pick the right tool for each visual:
 - **CSS/Unicode decoration** for badges, dividers, icon glyphs — no files needed.
 
 Rules for every image: **relative paths, mind the depth** — concept pages live in
-`concepts/`, so they reference `../assets/img/x.png`; `index.html` /
-`cheatsheet.html` use `assets/img/x.png`. Always wrap in a `<figure>` with a
+`concepts/`, so they reference `../assets/img/x.webp`; `index.html` /
+`cheatsheet.html` use `assets/img/x.webp`. Always wrap in a `<figure>` with a
 caption and `alt` text.
 
 **Lock every image to a size — the page can't scroll.** Pages are fixed-height CSS
@@ -661,7 +661,7 @@ Wherever a real/generated image would genuinely help, create an **image slot**:
    {
      "id": "ownership-move",
      "prompt": "A clean, modern editorial illustration: a String value as a labeled box moving along an arrow from variable s1 to s2, with s1 dimmed and crossed out to show it's been invalidated. Warm rust/oxide palette, flat vector style, generous whitespace, no text labels baked in. Target size ~1280×720px, 16:9 landscape; compose for a small on-page figure with the subject centred and safe margins — it is letterboxed into a 16:9 box, so keep nothing important near the edges.",
-     "file": "assets/img/ownership-move.png",
+     "file": "assets/img/ownership-move.webp",
      "alt": "Moving a String invalidates the original binding",
      "caption": "A move transfers ownership; the original binding can no longer be used.",
      "concept": "ownership",
@@ -673,8 +673,10 @@ Wherever a real/generated image would genuinely help, create an **image slot**:
    + aspect (e.g. *"~1280×720px, 16:9 landscape"*) and a note that the art is letterboxed
    into that box so the subject should sit centred with safe margins. **Always set
    `aspect`** (`"16:9"`, `"3:2"`, `"1:1"`, `"4:3"`…) — it drives the CSS box, and the
-   prompt's stated ratio must match it. Keep `file` = `assets/img/<id>.<ext>` (png/jpg) —
-   the app saves the dropped image exactly there.
+   prompt's stated ratio must match it. Keep `file` = `assets/img/<id>.webp` —
+   **always declare `.webp`**: the app / `place_image.py` re-encodes whatever format
+   is dropped to the declared extension, and WebP keeps AI art ~85% smaller than PNG
+   at identical quality, which keeps the published library repo small.
 2. **Emit a placeholder** at that spot in the HTML. Use this exact structure so the
    app can wire it up (class names + `data-img-slot` / `data-img-file` matter; the
    `data-img-file` path is **relative to the book folder**, while the `<img src>` is
@@ -686,12 +688,12 @@ Wherever a real/generated image would genuinely help, create an **image slot**:
    <figure
      class="img-slot"
      data-img-slot="ownership-move"
-     data-img-file="assets/img/ownership-move.png"
+     data-img-file="assets/img/ownership-move.webp"
      style="--img-aspect:16 / 9"
    >
      <img
        class="img-real"
-       src="../assets/img/ownership-move.png"
+       src="../assets/img/ownership-move.webp"
        alt="Moving a String invalidates the original binding"
        width="1280" height="720"
        onerror="this.closest('.img-slot').classList.add('img-missing')"
@@ -912,11 +914,11 @@ orbit with **no network**, stay inside its box across a spread reflow and the
 gradient. The gallery picks a book's cover from any image slot whose **`id`
 contains `cover`** and whose **`concept` is `null`** (front-of-book, not tied to a
 concept page) — so name it exactly `cover-art` (preferred) and set `"concept":
-null`, `"file": "assets/img/cover-art.png"`. A themed id also works as long as it
+null`, `"file": "assets/img/cover-art.webp"`. A themed id also works as long as it
 contains "cover" (e.g. `gpu-zine-cover`), but **never** name a cover slot without
 "cover" in the id or attach it to a concept, or the gallery won't recognize it.
 Emit its placeholder in the `index.html` cover hero like any other slot. (A
-pre-rendered root `cover.png` also works and takes precedence; otherwise the
+pre-rendered root `cover.webp` (or `.png`) also works and takes precedence; otherwise the
 gallery falls back to a gradient keyed off the book id.)
 
 ## Privacy / locality note

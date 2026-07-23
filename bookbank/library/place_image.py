@@ -83,10 +83,26 @@ def convert_image(src: Path, dst: Path):
         with Image.open(src) as im:
             if dst_ext in ("jpg", "jpeg") and im.mode in ("RGBA", "P"):
                 im = im.convert("RGB")
-            im.save(dst)
+            if dst_ext == "webp":
+                # q82/m6 lands AI art ~85% smaller than PNG at identical
+                # visual quality — the reason slots declare .webp at all.
+                im.save(dst, quality=82, method=6)
+            else:
+                im.save(dst)
         return
     except ImportError:
         pass
+
+    if dst_ext == "webp":
+        # macOS sips can't encode webp; cwebp (brew install webp) can, from
+        # png/jpeg/tiff input.
+        if shutil.which("cwebp"):
+            r = subprocess.run(
+                ["cwebp", "-quiet", "-q", "82", "-m", "6", str(src),
+                 "-o", str(dst)], capture_output=True, text=True)
+            if r.returncode == 0 and dst.is_file():
+                return
+            raise RuntimeError(f"cwebp failed on {src}: {r.stderr.strip()}")
 
     sips_fmt = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png"}.get(dst_ext)
     if sips_fmt:
@@ -98,8 +114,8 @@ def convert_image(src: Path, dst: Path):
         raise RuntimeError(f"sips failed to convert {src} -> {dst}: {r.stderr.strip()}")
 
     raise RuntimeError(
-        f"don't know how to convert .{src_ext} -> .{dst_ext} (no Pillow, and "
-        f"sips only handles jpeg/png) — convert it yourself and re-run")
+        f"don't know how to convert .{src_ext} -> .{dst_ext} (no Pillow/cwebp, "
+        f"and sips only handles jpeg/png) — convert it yourself and re-run")
 
 
 def main():
