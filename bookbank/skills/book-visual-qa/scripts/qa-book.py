@@ -53,6 +53,12 @@ import sys
 import tempfile
 from pathlib import Path
 
+# Software-render WebGL. Default headless Chrome has NO WebGL at all, so a book
+# with a three.js figure would QA with a blank canvas and we'd never know — the
+# checks would pass on a page the reader sees differently. --disable-gpu is
+# implied by the ANGLE/SwiftShader selection.
+GL_FLAGS = ["--enable-unsafe-swiftshader", "--use-gl=angle", "--use-angle=swiftshader"]
+
 CHROME_CANDIDATES = [
     os.environ.get("CHROME_BIN", ""),
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -229,7 +235,7 @@ def calibrate(chrome, width, height, _cache={}):
     tmp.write_text(CALIBRATION_HTML, encoding="utf-8")
     try:
         r = subprocess.run(
-            [chrome, "--headless", "--disable-gpu", "--hide-scrollbars",
+            [chrome, "--headless"] + GL_FLAGS + ["--hide-scrollbars",
              f"--window-size={width},{height}", "--virtual-time-budget=2000",
              "--dump-dom", f"file://{tmp.resolve()}"],
             capture_output=True, text=True, timeout=60)
@@ -274,7 +280,7 @@ def probe_page(chrome, page: Path, book: Path, width: int, height: int):
     tmp.write_text(html, encoding="utf-8")
     try:
         r = subprocess.run(
-            [chrome, "--headless", "--disable-gpu", "--hide-scrollbars",
+            [chrome, "--headless"] + GL_FLAGS + ["--hide-scrollbars",
              f"--window-size={win_w},{win_h}", "--virtual-time-budget=5000",
              "--dump-dom", f"file://{tmp.resolve()}"],
             capture_output=True, text=True, timeout=90)
@@ -296,7 +302,7 @@ def probe_page(chrome, page: Path, book: Path, width: int, height: int):
 def shoot(chrome, page: Path, out_png: Path, width: int, height: int):
     out_png.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        [chrome, "--headless", "--disable-gpu", "--hide-scrollbars",
+        [chrome, "--headless"] + GL_FLAGS + ["--hide-scrollbars",
          f"--window-size={width},{height}", "--virtual-time-budget=4000",
          f"--screenshot={out_png}", f"file://{page.resolve()}"],
         capture_output=True, text=True, timeout=90)
