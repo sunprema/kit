@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>cover</title>
+<style>
+/* ─────────────────────────────────────────────────────────────────────────
+   BookBank typeset cover — starting skeleton. Adapt freely; the only rules
+   that MUST survive are marked REQUIRED.
+
+   REQUIRED: every length that affects composition is in vw/vh units, never
+   px. The stage is exactly the render viewport, so vw-sized type means the
+   same cover renders identically at --width 1200 or 2000. A px-sized title
+   silently changes proportion with the render size.
+
+   REQUIRED: tokens below are pasted verbatim from the book's theme JSON.
+   Do not invent colors — the cover must look like it belongs to the book.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root{
+  /* ── PASTE the theme's tokens + fonts here, verbatim ── */
+  --bg:#ffffff;
+  --bg-2:#f4f4f1;
+  --ink:#111111;
+  --ink-soft:#61615d;
+  --accent:#e63329;
+  --rule:#e3e3df;
+  --font-display:"Helvetica Neue",Helvetica,-apple-system,Arial,sans-serif;
+  --font-body:"Helvetica Neue",Helvetica,-apple-system,Arial,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+html,body{ width:100%; height:100%; overflow:hidden; }
+
+/* REQUIRED — the stage is the full viewport and never scrolls. Anything that
+   overflows is silently cropped by the screenshot, so compose inside it. */
+.stage{
+  position:absolute; inset:0;
+  background:var(--bg);
+  /* ── PASTE the theme's background.css here as background-image ── */
+  color:var(--ink);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:column;
+  padding:5.5vw 6vw;
+}
+
+/* Swiss-flavoured default: thick top rule, kicker, dominant title, meta foot.
+   Replace this block wholesale for a theme with different signatures. */
+
+.rule-top{ height:0.9vw; background:var(--ink); flex:none; }
+
+.kicker{
+  margin-top:2.4vw;
+  font-size:1.15vw; font-weight:800;
+  letter-spacing:0.22em; text-transform:uppercase;
+  color:var(--accent);
+}
+
+.title{
+  margin-top:auto;
+  font-family:var(--font-display);
+  font-size:9vw; line-height:0.92;
+  font-weight:800; letter-spacing:-0.035em;
+  max-width:15em;
+}
+.title .accent{ color:var(--accent); }
+
+.sub{
+  margin-top:1.8vw;
+  font-size:1.85vw; line-height:1.3;
+  color:var(--ink-soft);
+  max-width:26em;
+}
+
+.foot{
+  margin-top:auto;
+  padding-top:1.4vw;
+  border-top:0.12vw solid var(--rule);
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-size:1.05vw; font-weight:700;
+  letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--ink-soft);
+}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="rule-top"></div>
+    <div class="kicker">A Field Guide</div>
+
+    <h1 class="title">Book <span class="accent">Title</span></h1>
+    <p class="sub">One line that says what the book actually is.</p>
+
+    <div class="foot">
+      <span>Eight chapters</span>
+      <span>BookBank</span>
+    </div>
+  </div>
+</body>
+</html>
