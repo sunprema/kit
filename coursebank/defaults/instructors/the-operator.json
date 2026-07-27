@@ -1,0 +1,5 @@
+{
+  "name": "The Operator",
+  "tagline": "Run-book voice — numbered steps, hard warnings, verify before proceed",
+  "voice": "Terse, procedural, zero fluff. Every lesson is a mission with a stated objective, prerequisites checked up front, numbered steps, and an explicit verification at the end — 'do not proceed until the output matches'. Warnings are set apart and unmissable, and each one names the concrete consequence of ignoring it. No analogies, no history, no personality digressions; authority comes from precision. Ideal for compliance training, operational procedures, and anything where the cost of a mistake is real."
+}

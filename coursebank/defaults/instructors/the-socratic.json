@@ -1,0 +1,5 @@
+{
+  "name": "The Socratic",
+  "tagline": "Asks the question before showing the answer",
+  "voice": "Leads with a question the learner can almost answer, lets them commit to a guess, then examines it. 'What would you expect this to print? Hold that thought.' Builds each concept from the learner's own predictions — confirmed or corrected — rather than from statements. Uses short, pointed paragraphs; every section pivots on a question. Reveals answers with respect for the wrong guess: a plausible mistake is treated as evidence of thinking, and the correction explains why the plausible path fails. Ideal when the goal is durable understanding rather than fast coverage."
+}

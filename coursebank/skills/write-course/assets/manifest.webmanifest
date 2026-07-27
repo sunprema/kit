@@ -1,0 +1,14 @@
+{
+  "name": "__COURSE_TITLE__",
+  "short_name": "__COURSE_SHORT__",
+  "description": "__COURSE_SUMMARY__",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "__THEME_BG__",
+  "theme_color": "__THEME_BG__",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

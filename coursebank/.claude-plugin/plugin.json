@@ -1,0 +1,8 @@
+{
+  "name": "coursebank",
+  "version": "0.1.0",
+  "description": "Generate interactive training courses from a source corpus (a repo, docs site, or policy set) as installable offline-first PWAs — modules, lessons, checkpoints, progress tracking, and a completion certificate.",
+  "author": {
+    "name": "Sundar Nambuvel"
+  }
+}

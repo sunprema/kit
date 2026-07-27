@@ -9,6 +9,11 @@
       "name": "bookbank",
       "source": "./bookbank",
       "description": "Skills and tools for authoring BookBank books: research-and-write a topic into a self-contained HTML book, publish to the public library, and turn a GitHub Issue into a generated book."
+    },
+    {
+      "name": "coursebank",
+      "source": "./coursebank",
+      "description": "Skills and tools for building CourseBank courses: generate an interactive training course from a source corpus (a repo, docs, or policies) as an installable offline-first PWA with lessons, checkpoints, tracked progress, and a completion certificate. Requires the bookbank plugin for its craft skills."
     }
   ]
 }

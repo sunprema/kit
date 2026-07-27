@@ -14,6 +14,11 @@ just the plugin(s) you want.
 - **[`bookbank/`](bookbank/)** — research-and-write BookBank books, publish
   them to the public library (`sunprema/books`), and generate a book from a
   GitHub Issue. See [`bookbank/docs/contributor-setup.md`](bookbank/docs/contributor-setup.md).
+- **[`coursebank/`](coursebank/)** — generate an interactive training course
+  from a source corpus (a repo, docs, or policies) as an installable
+  offline-first PWA — lessons, checkpoints, tracked progress, and a
+  completion certificate. Requires `bookbank` for its craft skills. See
+  [`coursebank/docs/design.md`](coursebank/docs/design.md).
 
 (More plugins land here over time — each lives in its own top-level
 directory, listed in `.claude-plugin/marketplace.json`.)
