@@ -274,6 +274,12 @@ Rules:
    flourish. (If `theme` is absent, use a neutral, legible house look.)
 7. **Write the pages** (from the research artifact):
    - `assets/book.css` — the full stylesheet (self-contained, no external CDNs).
+     **Append the shared diagram vocabulary** to it — copy the contents of
+     `${CLAUDE_PLUGIN_ROOT}/skills/book-diagrams/assets/diagram-kit.css` in
+     verbatim (it is pure token references, so it inherits the theme). Every
+     book gets it by default; that is what keeps figures consistent library-wide
+     instead of each book inventing its own class names. Books stay
+     self-contained, so it is copied in, never linked.
    - `concepts/NN-slug.html` — one page per concept (`NN` = 01, 02, … in order).
    - `index.html` — the cover + table of contents linking each concept. Give the
      cover hero a **cover-art image slot** (`id` containing "cover", `concept:
@@ -285,8 +291,13 @@ Rules:
 8. **Update `book.json`** — set each concept's `file` + `status: "ready"`, the
    book `status: "ready"`, a one-line `summary`, and any **image slots** in
    `images[]` (id + prompt + file).
-9. Optionally render a `cover.webp` (used by the gallery; otherwise it falls back to
-   a gradient). Tell the user to press ⌘R / reopen the book to see the update.
+9. Give the book a `cover.webp` (the gallery uses it; otherwise it falls back to a
+   gradient). For a **type-led theme** — `swiss`, `binder`, `blueprint`, `phosphor`,
+   `codex`, `circuit` — the best cover is the book's own design system set large,
+   which the **`typeset-cover`** skill composes and renders with no image model and
+   no art round-trip. Reach for a cover-art *image slot* instead when the book
+   genuinely wants a picture. Then tell the user to press ⌘R / reopen the book to
+   see the update.
 
 ## Expanding a concept (the "wherever I need" path)
 
@@ -474,6 +485,8 @@ CSS skeleton (colors/fonts come from the theme tokens — `var(--bg)`, `var(--in
   transition: transform .5s cubic-bezier(.6,.02,.2,1);   /* the page-flip */
 }
 .book-leaf > *{ break-inside:avoid; }    /* don't split a block across the gutter */
+h1,h2,h3,h4{ break-after:avoid; }        /* a heading must never end a column,
+                                            stranded from the block it introduces */
 .book-spine{ position:fixed; top:0; bottom:0; left:50%; width:2px; transform:translateX(-1px);
   box-shadow:0 0 22px 10px rgba(0,0,0,.10); pointer-events:none; }
 .book-nav{ position:fixed; left:0; right:0; bottom:0; display:flex; gap:1.5rem;
@@ -601,6 +614,13 @@ the loss. Also verify the **mobile fallback**: narrow the window below ~900px (o
 use a phone-width preview) and confirm the spread collapses to one normally-scrolling
 column with no clipped or overlapping content, and that Next/Prev now step file-to-file
 (there are no spreads left to paginate).
+
+  The mechanical half of all this is a skill: **`/book-visual-qa <book-id>`**
+  renders every page at both widths and reports what a reading eye would catch
+  — orphaned headings, page-level horizontal scroll, images that blow out their
+  box, near-empty columns — plus a screenshot per page to look at. Run it
+  alongside `validate_book.py` before marking a book ready; the two check
+  different things and neither subsumes the other.
 - **Theme-driven skin (tokens + mood):** the **theme** supplies the skin, not your
   imagination. At the top of `book.css`, emit a `:root {}` that sets every one of
   the theme's `tokens` and `fonts` verbatim, and paint the page from `background`:
@@ -649,6 +669,20 @@ never hotlink a remote URL in `<img>`. Pick the right tool for each visual:
   architecture. Crisp at any size, weighs nothing, no files, and you can **theme it
   to the book's palette**. If you can express it as SVG, do — don't make the user
   source a diagram you could draw.
+
+  **Use the shared vocabulary, don't invent one.** The classes come from
+  `diagram-kit.css`, which step 7 already appended to `book.css`: `.diagram`
+  on the `<svg>`, `.stroke` / `.stroke-soft` / `.stroke-red` for lines,
+  `.fill-soft` / `.fill-ink` / `.fill-red` for shapes, and `.big` / `.red` /
+  `.dim` / `.mono` / `.on-ink` on `<text>`. Hold one coordinate space per book
+  (`viewBox="0 0 560 H"`) so weights and labels stay identical page to page,
+  never write a hex value or `style=` into a diagram (it would break re-skinning),
+  spend the accent on exactly one idea, and always pair color with a label so
+  meaning survives greyscale. Seven tested, copy-pasteable patterns — flow,
+  before/after, timeline, sequence, layered stack, state machine, comparison —
+  are in `${CLAUDE_PLUGIN_ROOT}/skills/book-diagrams/references/patterns.md`;
+  start from the closest one rather than an empty `<svg>`. The `book-diagrams`
+  skill has the full rationale and the rendering check.
 - **Real/illustrative images you can't draw → declare an image slot** (next
   section). Photographs, stylized cover art, rich illustrations. You don't have the
   image, so you write a **prompt** for the user's external image agent (e.g. Nano
