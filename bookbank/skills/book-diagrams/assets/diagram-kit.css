@@ -1,0 +1,53 @@
+/* diagram-kit.css — the shared vocabulary for inline-SVG book diagrams.
+   Paste into the book's assets/book.css. Every value comes from a theme
+   token, so a diagram re-skins with the book and never needs editing.
+
+   Nothing here hardcodes a color. That is the whole point: a diagram drawn
+   with these classes looks native in `swiss` and in `phosphor` alike. */
+
+figure.diagram-fig{ margin:0 0 1.2rem; max-width:34em; break-inside:avoid; }
+
+.diagram{
+  width:100%; height:auto; display:block;
+  background:var(--bg);
+  border:1px solid var(--rule);
+}
+/* A borderless variant for diagrams that should float in the page. */
+.diagram.bare{ border:0; background:none; }
+
+/* ── Type ───────────────────────────────────────────────────────────────
+   Labels are small caps by default (they are annotation, not prose);
+   .big is for the words a reader actually reads. Never set font-size
+   inside the SVG markup — it would not scale with the theme.            */
+.diagram text{
+  font-family:var(--font-body);
+  font-size:9px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+  fill:var(--ink-soft);
+}
+.diagram text.big{
+  font-size:11px; font-weight:600;
+  letter-spacing:-0.01em; text-transform:none;
+  fill:var(--ink);
+}
+.diagram text.mono{ font-family:var(--font-mono); text-transform:none; letter-spacing:0; }
+.diagram text.red{ fill:var(--accent); }
+.diagram text.dim{ fill:var(--cm); }
+.diagram text.on-ink{ fill:var(--bg); }        /* label sitting on a filled box */
+
+/* ── Strokes ────────────────────────────────────────────────────────── */
+.diagram .stroke{ stroke:var(--ink); stroke-width:1; fill:none; }
+.diagram .stroke-soft{ stroke:var(--rule); stroke-width:1; fill:none; }
+.diagram .stroke-red{ stroke:var(--accent); stroke-width:1.5; fill:none; }
+.diagram .stroke-thick{ stroke:var(--ink); stroke-width:2; fill:none; }
+.diagram .dash{ stroke-dasharray:4 3; }
+
+/* ── Fills ──────────────────────────────────────────────────────────── */
+.diagram .fill-soft{ fill:var(--bg-2); }
+.diagram .fill-ink{ fill:var(--ink); }
+.diagram .fill-red{ fill:var(--accent); }
+.diagram .fill-bg{ fill:var(--bg); }
+.diagram .fill-none{ fill:none; }
+
+/* Screen-reader + print fallback: <title> is read, never drawn. */
+.diagram title{ display:none; }

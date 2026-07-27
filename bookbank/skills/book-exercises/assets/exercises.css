@@ -1,0 +1,98 @@
+/* exercises.css — self-check blocks for a paginated BookBank book.
+   Paste into the book's assets/book.css. Token-driven; no hardcoded colors.
+
+   THE CONSTRAINT THAT SHAPES EVERYTHING HERE: a BookBank page is a
+   fixed-height multicolumn spread that cannot scroll. If revealing an answer
+   GREW the page, the columns would re-flow and the spread would rearrange
+   under the reader's hands — the paragraph they were reading would jump to
+   the other page. So an answer is always laid out and always occupies its
+   space; revealing only changes whether it is legible. Never use
+   display:none / height:0 to hide an answer in a book. */
+
+.exercise{
+  border:1px solid var(--rule);
+  border-left:3px solid var(--ink);
+  padding:.75rem .85rem;
+  margin:0 0 1.1rem;
+  max-width:33em;
+  break-inside:avoid;
+}
+.exercise .ex-label{
+  display:block;
+  font-size:.63rem; letter-spacing:.14em; text-transform:uppercase;
+  font-weight:800; color:var(--ink-soft);
+  margin-bottom:.4rem;
+}
+.exercise .ex-q{ margin:0 0 .6rem; }
+.exercise .ex-q:last-of-type{ margin-bottom:.6rem; }
+
+/* ── The answer: present, sized, but unreadable until asked for ───────── */
+.ex-answer{
+  position:relative;
+  border-top:1px solid var(--rule);
+  padding-top:.55rem;
+  margin-top:.55rem;
+}
+.ex-answer > *{ margin-bottom:.5rem; }
+.ex-answer > *:last-child{ margin-bottom:0; }
+
+.exercise:not(.revealed) .ex-answer{
+  filter:blur(5px);
+  opacity:.38;
+  user-select:none;
+  pointer-events:none;
+}
+.exercise.revealed .ex-answer{
+  filter:none; opacity:1;
+  transition:filter .18s ease, opacity .18s ease;
+}
+
+.ex-reveal{
+  font-family:var(--font-body);
+  font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; font-weight:800;
+  color:var(--bg); background:var(--ink);
+  border:0; border-radius:0; padding:.32rem .7rem;
+  cursor:pointer;
+}
+.ex-reveal:hover{ background:var(--accent); }
+/* visibility, NOT display — display:none would remove the button's height and
+   shrink the block by ~30px on reveal, re-flowing the very columns this file
+   exists to protect. It keeps its space and stops being interactive. */
+.exercise.revealed .ex-reveal{ visibility:hidden; }
+
+/* Printing a book should print its answers. */
+@media print{
+  .exercise .ex-answer{ filter:none !important; opacity:1 !important; }
+  .ex-reveal{ visibility:hidden; }
+}
+
+/* Readers who cannot tolerate motion still get the reveal, just instantly. */
+@media (prefers-reduced-motion: reduce){
+  .exercise.revealed .ex-answer{ transition:none; }
+}
+
+/* ── Multiple choice ──────────────────────────────────────────────────── */
+.quiz{ margin:.6rem 0 0; }
+.quiz-opt{
+  display:block; width:100%; text-align:left;
+  font-family:var(--font-body); font-size:.88rem; color:var(--ink);
+  background:var(--bg); border:1px solid var(--rule); border-radius:0;
+  padding:.4rem .55rem; margin-bottom:.35rem; cursor:pointer;
+}
+.quiz-opt:hover{ border-color:var(--ink); }
+.quiz-opt .mark{
+  display:inline-block; width:1.1em; font-weight:800; color:var(--ink-soft);
+}
+.quiz-opt.correct{ border-color:var(--en); }
+.quiz-opt.correct .mark{ color:var(--en); }
+.quiz-opt.wrong{ border-color:var(--accent); }
+.quiz-opt.wrong .mark{ color:var(--accent); }
+.quiz.answered .quiz-opt{ cursor:default; }
+
+/* Feedback occupies its space from the start — same no-reflow rule. */
+.quiz-note{
+  font-size:.78rem; color:var(--ink-soft);
+  min-height:2.4em; margin-top:.35rem;
+  visibility:hidden;
+}
+.quiz.answered .quiz-note{ visibility:visible; }

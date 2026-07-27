@@ -1,0 +1,55 @@
+/* apparatus.css — glossary, index and further-reading styling.
+   Paste into the book's assets/book.css. Token-driven; no hardcoded colors. */
+
+/* ── Further reading ──────────────────────────────────────────────────── */
+.further-reading{ max-width:33em; }
+.fr-note{ font-size:.78rem; color:var(--ink-soft); margin:0 0 .8rem; }
+.fr-list{ list-style:none; padding:0; margin:0; }
+.fr-item{
+  border-top:1px solid var(--rule);
+  padding:.5rem 0;
+  break-inside:avoid;
+}
+.fr-title{ display:block; font-weight:700; font-size:.9rem; border:0; }
+.fr-kind{
+  display:inline-block; margin-top:.15rem;
+  font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; font-weight:800;
+  color:var(--ink-soft);
+}
+.fr-where{
+  display:block; margin-top:.15rem;
+  font-size:.74rem; color:var(--ink-soft); line-height:1.35;
+}
+.fr-unused{ font-style:italic; }
+
+/* ── Index ────────────────────────────────────────────────────────────── */
+.book-index{ max-width:33em; }
+.ix-list{ list-style:none; padding:0; margin:0; }
+.ix-list li{
+  display:flex; gap:.8rem; align-items:baseline; justify-content:space-between;
+  border-bottom:1px solid var(--rule);
+  padding:.3rem 0;
+  font-size:.84rem;
+  break-inside:avoid;
+}
+.ix-term{ font-weight:700; }
+.ix-refs{ color:var(--ink-soft); font-size:.76rem; text-align:right; }
+.ix-refs a{ border:0; }
+
+/* ── Glossary ─────────────────────────────────────────────────────────── */
+.glossary{ max-width:33em; }
+.glossary dl{ margin:0; }
+.glossary dt{
+  font-weight:700; font-size:.88rem;
+  border-top:1px solid var(--rule); padding-top:.45rem; margin-top:.45rem;
+}
+.glossary dd{ margin:.15rem 0 0; font-size:.84rem; color:var(--ink-soft); }
+.glossary dd .g-see{ font-style:italic; }
+
+/* A defined term in running prose. The dotted underline says "there is a
+   definition"; title= gives it on hover WITHOUT changing layout — a popover
+   that expanded the page would re-flow the spread. */
+.term[data-def]{
+  border-bottom:1px dotted var(--ink-soft);
+  cursor:help;
+}
