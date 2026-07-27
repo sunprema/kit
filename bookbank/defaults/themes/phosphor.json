@@ -1,0 +1,35 @@
+{
+  "background" : {
+    "css" : "repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px), radial-gradient(ellipse at 50% 40%, #0e1a0e 0%, #0a120a 60%, #060b06 100%)",
+    "kind" : "crt",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "ui-monospace,\"SF Mono\",\"JetBrains Mono\",Menlo,Consolas,monospace",
+    "--font-display" : "ui-monospace,\"SF Mono\",\"JetBrains Mono\",Menlo,Consolas,monospace",
+    "--font-mono" : "ui-monospace,\"SF Mono\",\"JetBrains Mono\",Menlo,Consolas,monospace"
+  },
+  "id" : "phosphor",
+  "mood" : "A green-phosphor CRT terminal in a dark ops room. Near-black ground with faint horizontal scanlines (the repeating gradient in the background — keep it subtle, never dizzying). Everything is set in monospace, including headings; display text carries a soft phosphor bloom via text-shadow (0 0 8px rgba(74,240,122,.35)) used on headings and key numbers only, never on body text. Signatures to reproduce structurally: (1) section headers styled as shell prompts — a '$ ' or '> ' glyph in --accent before the title; (2) cards and asides drawn as ASCII-adjacent boxes: 1px --rule borders, square corners, no border-radius anywhere; (3) a thin blinking block cursor (CSS steps() animation) at the end of each page's final line. Amber (--num) is the only warm color — spend it like a warning light. The feel: you are reading a live session, not a document. Terse, glowing, nocturnal.",
+  "name" : "Phosphor",
+  "tagline" : "Green-phosphor CRT — scanlines, glow, a blinking cursor",
+  "tokens" : {
+    "--accent" : "#4af07a",
+    "--at" : "#6fd6c0",
+    "--bg" : "#0a120a",
+    "--bg-2" : "#101a10",
+    "--cm" : "#557a55",
+    "--code-bg" : "#070c07",
+    "--en" : "#b6f07a",
+    "--fn" : "#b6f07a",
+    "--ink" : "#c9f2cd",
+    "--ink-soft" : "#7fab84",
+    "--kw" : "#4af07a",
+    "--lif" : "#4af07a",
+    "--mac" : "#9ae0e8",
+    "--num" : "#e8b45a",
+    "--rule" : "#1d321d",
+    "--str" : "#e8d98a",
+    "--ty" : "#6fd6c0"
+  }
+}

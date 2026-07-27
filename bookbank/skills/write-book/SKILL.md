@@ -100,7 +100,9 @@ those are a guided-mode plan awaiting the author's approval.
 
   A **persona** is `{ "name", "tagline", "voice" }`; `book.json`'s `persona`
   is the persona **id** (filename without `.json`), or absent for the default
-  voice. A **theme** is the book's **look & feel** (palette, fonts,
+  voice, or the special value `"auto"` — meaning: pick the best-fitting
+  persona for this topic at build time and replace `"auto"` with the chosen
+  id (see Procedure step 2). A **theme** is the book's **look & feel** (palette, fonts,
   background); `book.json`'s `theme` is the theme **id**, or absent for a
   neutral house look. A theme is **tokens + a mood** — see **Design** below.
 
@@ -152,6 +154,10 @@ Field rules:
   **Never drop or reorder user concepts** — keep them, generate them.
 - Keep `created` as ISO `yyyy-MM-dd`; set it once and leave it.
 - Preserve `id`, `title`, `topic`, `persona`, `theme` exactly as the app wrote them.
+  One exception: `"persona": "auto"` is a placeholder, not a choice — the build
+  resolves it to a concrete persona id **once** (Procedure step 2) and writes
+  that id back; from then on the id is preserved like any other. Never leave
+  `"auto"` in a book that has pages, and never re-roll the pick on a rebuild.
 - `theme`: the look-&-feel id under `<root>/themes/`, or absent = neutral house
   look. It's a durable request field like `persona` — never drop it on a rebuild.
 - `notes`: optional, only meaningful while `status` is `"requested"` — see
@@ -234,7 +240,18 @@ Rules:
 2. **Load the persona** by resolving its id through the 3-tier cascade above
    and write in that `voice`. The persona governs **voice only** — tone,
    analogies, how concepts are explained. If `persona` is absent, use a
-   clear, friendly technical author. **Load the theme** the same way — it
+   clear, friendly technical author. If `persona` is `"auto"`, pick the voice
+   yourself, before any writing: list every persona id available across all
+   three cascade tiers (`ls` each dir; nearer tiers shadow same-named ids),
+   read their `tagline`/`voice`, and choose the one that genuinely fits the
+   topic, audience, and `notes` — e.g. an outage-driven SRE voice for a
+   reliability book, a historian for a "why is X like this" book; don't
+   default to a favorite. Then **write the chosen id into `book.json`'s
+   `persona` immediately** (replacing `"auto"`) so every later pass — staged
+   page builds, rebuilds, revisions — reuses the same voice instead of
+   re-rolling it, and say which persona you picked and why in one line when
+   you report. The whole book is one narrator; `"auto"` is resolved once per
+   book, never per page or per chapter. **Load the theme** the same way — it
    governs **look only** (palette, fonts, background). If `theme` is absent,
    use a neutral house look.
 3. **Research the web.** Use WebSearch + WebFetch to get the topic _right_: current

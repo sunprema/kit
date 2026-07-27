@@ -81,3 +81,44 @@ instead — commit your book folder and `git push` to a fork, then
   one-off local experiment.
 
 First match wins, in that order (clone → user → plugin default).
+
+### Built-in personas
+
+`book.json`'s `persona` field takes one of these ids, or the special value
+`auto` — write-book then picks the best-fitting voice for the topic at build
+time and replaces `auto` with the chosen id (once per book; the whole book is
+one narrator).
+
+| id | voice |
+|----|-------|
+| `clear-mentor` | Patient senior engineer, example-first |
+| `feynman` | First-principles, playful, intuition-first |
+| `isaac-newton` | Principled natural philosopher — derives everything from necessity |
+| `the-crafter` | Precise incremental teacher, "Crafting Interpreters" style |
+| `the-guitarist` | Practical guitar master — calm, no fluff |
+| `the-incident-commander` | Learn from outages — every concept is a postmortem |
+| `the-historian` | The why behind the weird — technology as history |
+| `the-adversary` | Threat-model thinking — understand a system by how it breaks |
+| `the-whiteboard-architect` | Boxes, arrows, and trade-offs — systems at scale |
+| `the-performance-engineer` | Measure first — mechanical sympathy and real numbers |
+| `the-pragmatic-cto` | Boring technology, real deadlines — engineering as economics |
+
+### Built-in themes
+
+Each theme is tokens + a mood; the newer ones also demand *structural
+signatures* (spiral spine, scanlines, via-dot corners, …) spelled out in the
+theme's `mood` — reproduce them, they're what make the look.
+
+| id | look |
+|----|------|
+| `binder` | Spiral-bound practice notebook — cream ruled leaves, red-pen accent |
+| `blueprint` | Cyan-on-navy drafting grid — technical and precise |
+| `chalkboard` | Slate board and chalk — math and first principles |
+| `codex` | Warm aged paper — a classic printed book |
+| `observatory` | Deep space, glowing ink — built for wonder |
+| `phosphor` | Green-phosphor CRT — scanlines, glow, a blinking cursor |
+| `swiss` | White field, black grotesque, one red accent — grid discipline |
+| `riso` | Two-ink zine — federal blue + fluoro pink, lovingly misregistered |
+| `circuit` | Solder-mask green + copper traces — silkscreen precision |
+| `aurora` | Polar-night gradients and frosted glass — calm and premium |
+| `arcade` | Synthwave cabinet — neon horizon, pixel progress, LEVEL 01 |

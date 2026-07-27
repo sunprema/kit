@@ -1,0 +1,36 @@
+{
+  "background" : {
+    "css" : "radial-gradient(900px 520px at 50% -10%, #fbf7ec 0%, rgba(251,247,236,0) 60%), linear-gradient(180deg, #efe9d8 0%, #e4ddc8 100%)",
+    "kind" : "paper",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "\"Avenir Next\",\"Segoe UI\",Helvetica,Arial,sans-serif",
+    "--font-display" : "\"Futura\",\"Avenir Next\",\"Trebuchet MS\",Helvetica,sans-serif",
+    "--font-mono" : "ui-monospace,\"SF Mono\",Menlo,Consolas,monospace"
+  },
+  "id" : "riso",
+  "mood" : "A risograph-printed zine: warm off-white stock printed in exactly two inks — federal blue and fluorescent pink — with the charming imperfection of the medium. Body text is the blue ink (--ink is a deep blue, not black); pink is the shout. Signatures to reproduce structurally: (1) headings carry a slight misregistration — a pink duplicate of the heading offset 2–3px behind the blue via text-shadow or a pseudo-element, as if the second ink pass drifted; (2) emphasis blocks are solid pink or blue panels with the paper color knocked out as the text; (3) images and diagrams should look screen-printed: flat two-color fills, halftone-dot patterns (radial-gradient dots) instead of photographic gradients; (4) section dividers are chunky hand-drawn-feeling bars or stars, never hairlines. Corners slightly rounded, edges a little imperfect. The feel: a smart friend's hand-made pamphlet about a serious topic — punchy, warm, unafraid of ink.",
+  "name" : "Riso",
+  "tagline" : "Two-ink zine — federal blue + fluoro pink, lovingly misregistered",
+  "tokens" : {
+    "--accent" : "#ff4d8d",
+    "--accent-2" : "#2b49c7",
+    "--at" : "#0e8a7a",
+    "--bg" : "#f8f4e9",
+    "--bg-2" : "#f1ecdc",
+    "--cm" : "#7c84b8",
+    "--code-bg" : "#efe9d8",
+    "--en" : "#0e8a7a",
+    "--fn" : "#0e8a7a",
+    "--ink" : "#1f2a5e",
+    "--ink-soft" : "#5d67a3",
+    "--kw" : "#ff4d8d",
+    "--lif" : "#ff4d8d",
+    "--mac" : "#7534b8",
+    "--num" : "#e8641a",
+    "--rule" : "#d9d2bd",
+    "--str" : "#2b49c7",
+    "--ty" : "#2b49c7"
+  }
+}

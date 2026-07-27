@@ -1,0 +1,35 @@
+{
+  "background" : {
+    "css" : "repeating-linear-gradient(90deg, rgba(232,163,79,.05) 0 1px, transparent 1px 64px), repeating-linear-gradient(0deg, rgba(232,163,79,.05) 0 1px, transparent 1px 64px), radial-gradient(circle at 30% 0%, #123020 0%, #0d2418 55%, #081a10 100%)",
+    "kind" : "pcb",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "-apple-system,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif",
+    "--font-display" : "\"Avenir Next\",\"Segoe UI\",Helvetica,Arial,sans-serif",
+    "--font-mono" : "ui-monospace,\"SF Mono\",\"JetBrains Mono\",Menlo,monospace"
+  },
+  "id" : "circuit",
+  "mood" : "A printed circuit board under a bench lamp: deep solder-mask green ground with a faint copper routing grid, silkscreen-white lettering, copper the only metal. Signatures to reproduce structurally: (1) card and aside borders are 1px copper (--accent) hairlines with a small filled 'via' dot at each corner (pseudo-elements or radial-gradient corners) — components soldered onto the board; (2) section headings carry a silkscreen reference designator in mono before the title (U1, R2, J3 …) in --ink-soft small caps; (3) connecting rules between diagram elements are right-angled traces, never curves — copper lines with rounded pads at the ends; (4) code blocks sit on the darkest green (--code-bg) like epoxy windows into the board. Copper is spent on borders, key terms, and headings; green stays calm and matte, no glow. The feel: hardware-shop precision — the book as a beautifully routed board.",
+  "name" : "Circuit",
+  "tagline" : "Solder-mask green + copper traces — silkscreen precision",
+  "tokens" : {
+    "--accent" : "#e8a34f",
+    "--at" : "#6fc7b8",
+    "--bg" : "#0d2418",
+    "--bg-2" : "#123020",
+    "--cm" : "#5f8a70",
+    "--code-bg" : "#0a1d13",
+    "--en" : "#a8d878",
+    "--fn" : "#a8d878",
+    "--ink" : "#e2f0e5",
+    "--ink-soft" : "#96b8a2",
+    "--kw" : "#e8a34f",
+    "--lif" : "#e8a34f",
+    "--mac" : "#d898e8",
+    "--num" : "#f0c060",
+    "--rule" : "#1f4630",
+    "--str" : "#b8d89a",
+    "--ty" : "#6fc7b8"
+  }
+}

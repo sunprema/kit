@@ -74,8 +74,11 @@ book correct (structure, design, image slots, everything in its SKILL.md).
 
 6. **Resolve persona/theme against the 3-tier cascade** (`write-book`'s
    "Personas & themes" section) — if the free-text `Persona`/`Theme` answer
-   case-insensitively matches an existing id at any tier, use that id.
-   Otherwise, if the field is non-blank, pass the raw text through as part of
+   case-insensitively matches an existing id at any tier, use that id. A
+   `Persona` answer of `auto` (case-insensitive) is also valid: write
+   `"persona": "auto"` and `write-book` picks the best-fitting voice for the
+   topic at build time (blank still means the default voice — don't turn
+   blank into `auto`). Otherwise, if the field is non-blank, pass the raw text through as part of
    `notes` (e.g. append `"Requested voice: <text>"` / `"Requested look:
    <text>"`) and let `write-book`'s existing "honor an inline voice" behavior
    handle it — do not invent a new persona/theme id yourself, and do not
