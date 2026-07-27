@@ -284,6 +284,14 @@ Rules:
    - `index.html` — the cover + table of contents linking each concept. Give the
      cover hero a **cover-art image slot** (`id` containing "cover", `concept:
      null`) so the library shows real artwork — see Images & diagrams.
+   - `assets/book-progress.js` — vendor the quiet reading-progress runtime from
+     the **`book-progress`** skill (chapters mark themselves read at their last
+     spread; the contents page gets soft read-marks and a resume link) and load
+     it **after `book.js`** on every page. Give every page's `<body>` a
+     `data-book="<book-id>"`, and put a hidden `<a class="book-resume" hidden>`
+     (plus optional `<span class="book-progress-note">`) in the index's
+     cover/TOC area, styled quietly per that skill — soft ink, never the
+     accent, nothing on concept pages.
    - `cheatsheet.html` — a dense, printable quick-reference (syntax tables,
      gotchas, the "30-second" summary).
    - Draw explanatory diagrams as **inline SVG**; for real/illustrative images you
@@ -556,6 +564,9 @@ Pager reference (`assets/book.js`) — adapt, but keep the contract:
     leaf.style.transform = 'translateX(' + (-i * spread) + 'px)';
     var n = document.querySelector('.book-pageno');
     if(n) n.textContent = (i + 1) + ' / ' + total;
+    // Reading-progress runtime (book-progress.js) listens for this to know
+    // the reader's spread — keep the line when adapting the pager.
+    window.dispatchEvent(new CustomEvent('bookbank:spread', { detail: { i: i, total: total } }));
   }
   function href(rel){ var a = document.querySelector('a[rel~="' + rel + '"]'); return a && a.getAttribute('href'); }
   window.bookbankPager = {
