@@ -38,14 +38,35 @@ are one level down) with `<meta charset="utf-8">` as the page's first line:
 <script src="../assets/vendor/three.iife.js"></script>
 ```
 
-Then follow the BookBank layout/runtime rules — lock the canvas to a capped
-aspect box (`break-inside:avoid`, `max-height:56vh`), size the renderer to the
-figure not the window, pause the rAF loop offscreen with an `IntersectionObserver`,
-keep interaction to mouse-drag/wheel so it doesn't fight the reader's arrow-key
-page-turns, and dispose the context on teardown. The **`write-book` skill's "3D
-figures (three.js)"** section is the authoritative spec — defer to it. The rest of
-this skill (scene setup, animation techniques, performance, shaders) still applies;
-only the *loading* mechanism changes for books.
+**Don't hand-roll the lifecycle — vendor the runtime.** `assets/book-three.js`
+in this skill is to 3D figures what `book-widgets.js` is to 2D canvas widgets:
+it owns the rules so a figure cannot get them wrong. Copy it next to the bundle
+and load it in between:
+
+```bash
+cp "$CLAUDE_PLUGIN_ROOT/skills/webgl-animations/assets/book-three.js" "<book-dir>/assets/vendor/"
+```
+```html
+<script src="../assets/vendor/three.iife.js"></script>
+<script src="../assets/vendor/book-three.js"></script>
+<script src="../assets/figures.js"></script>   <!-- your BookThree.register calls -->
+```
+
+It guarantees, per figure: renderer sized to the **figure** (never the window)
+with DPR clamped to 2; a **static first frame** before any motion (what print,
+screenshots and reduced-motion readers get); the rAF loop running **only while
+on screen**, via `IntersectionObserver`; time-based ticks with a clamped `dt`;
+re-fit on the pager's `bookbank:relayout`; context **disposed** on teardown; and
+per-figure failure isolation (a thrown init adds `.widget-failed` instead of
+taking the page down). It binds **no keys** — ← → ↑ stay with the pager.
+
+You still own the canvas CSS (capped aspect box, `break-inside:avoid`,
+`max-height:56vh`) and the scene contents. For the API in book-correct form —
+`window.THREE`, no `import` — see **`references/three-for-books.md`**, which
+also carries the geometry/material/lighting/shader cheat-sheets, the per-figure
+budget, and the headless-WebGL verification recipe. The **`write-book` skill's
+"3D figures (three.js)"** section remains the authoritative spec for where
+figures may appear at all.
 
 ## Decision tree
 
@@ -175,6 +196,13 @@ Before delivering, verify mentally or in a browser:
 
 ## Files in this skill
 
+- `assets/book-three.js` — **the BookBank 3D-figure runtime.** Vendor this into a
+  book; it owns sizing, the static first frame, offscreen pause, relayout re-fit,
+  disposal, and failure isolation. See the offline callout above.
+- `references/three-for-books.md` — three.js API reference written for books:
+  `window.THREE` (no `import`), geometry/materials/lighting/shaders/interaction,
+  the per-figure budget, and how to verify a figure headlessly (default headless
+  Chrome has **no WebGL** — you need the SwiftShader flags, which are in there).
 - `assets/orbit-controls.js` — dependency-free orbit controls (drag/wheel/pinch), works on r128+.
 - `assets/shader-quad.html` — minimal fullscreen-shader template (raw WebGL2) with simplex noise.
 - `assets/template.html` — single-file Three.js starter implementing the full checklist.
