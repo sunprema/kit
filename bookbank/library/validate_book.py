@@ -59,21 +59,22 @@ from pathlib import Path
 
 def default_root():
     """$BOOKBANK_ROOT, else cwd if it looks like a content-repo clone (has
-    books/, catalog.json, or a sunprema/books-ish git remote), else ~/bookbank.
-    Same cascade as build-library.py's --root default."""
+    books/, catalog.json, or a git remote matching $BOOKBANK_BOOKS_REPO), else
+    ~/bookbank. Same cascade as build-library.py's --root default."""
     if os.environ.get("BOOKBANK_ROOT"):
         return Path(os.environ["BOOKBANK_ROOT"])
     cwd = Path.cwd()
-    repo_hint = os.environ.get("BOOKBANK_BOOKS_REPO", "sunprema/books")
     if (cwd / "books").is_dir() or (cwd / "catalog.json").is_file():
         return cwd
-    try:
-        remotes = subprocess.run(["git", "remote", "-v"], cwd=cwd,
-                                  capture_output=True, text=True, timeout=3).stdout
-        if repo_hint in remotes:
-            return cwd
-    except Exception:
-        pass
+    repo_hint = os.environ.get("BOOKBANK_BOOKS_REPO")
+    if repo_hint:
+        try:
+            remotes = subprocess.run(["git", "remote", "-v"], cwd=cwd,
+                                      capture_output=True, text=True, timeout=3).stdout
+            if repo_hint in remotes:
+                return cwd
+        except Exception:
+            pass
     return Path.home() / "bookbank"
 
 

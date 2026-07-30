@@ -1,7 +1,7 @@
 {
   "name": "bookbank",
   "version": "0.1.0",
-  "description": "Research-and-write BookBank books, publish them to the public library, and generate a book from a GitHub Issue — no local BookBank.app required.",
+  "description": "Research-and-write BookBank books, publish them to your own GitHub Pages library, and generate a book from a GitHub Issue — no local BookBank.app required. Set $BOOKBANK_BOOKS_REPO to your books repo before publishing.",
   "author": {
     "name": "Sundar Nambuvel"
   }

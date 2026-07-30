@@ -1,15 +1,67 @@
 # Cloud dispatch: the `bookbank` Routine
 
-Book generation can run in the cloud instead of a contributor's own terminal,
-via one Claude Code Routine. This path is realistically **owner-only** —
-firing a routine requires the `RemoteTrigger` tool, which is only available
-inside a Claude Code session with routine access (there is no public,
-curl-able webhook). A contributor without access falls back to local
-dispatch: `/create-book-from-issue <n>` + `gh pr create` themselves.
+Book generation can run in the cloud instead of your own terminal, via one
+Claude Code Routine. Routines are **per-individual-account**: there is no
+shared routine to join, so this doc is a **recipe for creating your own**, not
+a pointer to an existing one. Firing a routine requires the `RemoteTrigger`
+tool inside a Claude Code session with routine access (there is no public,
+curl-able webhook). Without one, local dispatch does the same job:
+`/create-book-from-issue <n>` + `gh pr create` yourself.
 
-- **Trigger id**: `trig_01MfD61D3X8R4Ln6JtgDy3RQ`
+Once you've created yours, record its id **on your own machine** so
+`/dispatch-book-issue` can fire it:
+
+```
+export BOOKBANK_ROUTINE_TRIGGER_ID="trig_..."   # from your routine's URL
+```
+
 - **Name**: `bookbank`
-- **URL**: https://claude.ai/code/routines/trig_01MfD61D3X8R4Ln6JtgDy3RQ
+- **URL**: `https://claude.ai/code/routines/<your-trigger-id>`
+
+## How the routine gets its config: it doesn't need any
+
+**A routine has no env-var field and does not inherit your shell**, so nothing
+you `export` locally reaches it. It doesn't have to: the routine's
+`session_context.sources` already materializes your books repo, so the session
+is *standing inside a clone of it*, and every tool that needs the repo slug
+derives it from that clone's `origin` remote.
+
+```
+$ cd <books-clone> && python3 .../build-library.py --out . --root .
+repo: <owner>/<books> (from the origin remote)
+```
+
+Resolution is `--repo` → `$BOOKBANK_BOOKS_REPO` → the clone's `origin`, and it
+covers `build-library.py`, `publish-library`, `pull-book`, `create-book-from-issue`,
+and the data-root cascade (which keys off `books/` and `catalog.json`). Shell
+callers share one implementation, `library/resolve-repo.sh`.
+
+This is strictly safer than a baked-in default: it can only ever resolve to the
+repo the session actually has. Two properties keep it honest —
+
+- **Derivation only fires from a directory that looks like a books repo** (it
+  has `books/` or `catalog.json`). Standing in some unrelated project does not
+  silently make that project "your library" — the tools stop with a hint
+  instead. Run from the kit repo, for instance, and resolution is refused.
+- **If nothing resolves, the tools stop** rather than guess.
+
+**The one thing to keep right in the prompt:** the routine must `cd` into the
+books clone before running any bookbank tooling. This matters most if you adopt
+the sparse-clone change in *Known issues* below — with `sources` pointed at the
+kit repo, the session's default cwd is the kit checkout, and derivation there is
+(correctly) refused. Make the prompt clone the books repo and `cd` into it.
+
+If you ever do need to pin config explicitly — a fork, or a data root outside
+the clone — commit `.claude/settings.json` to the books repo, which the routine
+picks up because it's in the checkout:
+
+```json
+{ "env": { "BOOKBANK_BOOKS_REPO": "<owner>/<books>" } }
+```
+
+The books repo's `.gitignore` currently ignores `.claude/`; narrow it to
+`.claude/settings.local.json` first or the file will never be committed. Nothing
+secret goes there — it's a public repo.
 
 ## What it actually is (corrected from an earlier draft of this doc)
 
@@ -43,24 +95,28 @@ recreating:
 ## The routine's prompt (paraphrased — see the trigger for the verbatim text)
 
 1. Install the tooling plugin if not already present.
-2. Resolve which issue to process: the run's freeform text if given,
-   otherwise the oldest open `book-request`-labeled issue on
-   `sunprema/books` **without the `in-progress` label** (skipping requests
-   another run is already generating; stop if none qualify).
-3. Duplicate-work guard: if the resolved issue already carries
+2. **`cd` into the books-repo checkout before anything else.** Every later step
+   derives the repo slug from that clone's `origin` remote, so the working
+   directory *is* the configuration — see *How the routine gets its config*
+   above. No env vars to set.
+3. Resolve which issue to process: the run's freeform text if given,
+   otherwise the oldest open `book-request`-labeled issue on your books repo
+   **without the `in-progress` label** (skipping requests another run is
+   already generating; stop if none qualify).
+4. Duplicate-work guard: if the resolved issue already carries
    `in-progress`, stop and report instead of generating a duplicate
    (unless the run's freeform text explicitly says to redo it). Otherwise
    add the `in-progress` label + a "🏗️ Work started" comment *before* any
    generation, so a concurrently-fired run picks a different issue.
-4. Run `/create-book-from-issue <n>`.
-5. Commit, push a `claude/book-<n>-<slug>` branch, and `gh pr create --draft`
+5. Run `/create-book-from-issue <n>`.
+6. Commit, push a `claude/book-<n>-<slug>` branch, and `gh pr create --draft`
    with a `Closes #<n>` body — titled `"NEEDS FIXES — <title>"` instead of
    the normal title if `validate_book.py` left any error-severity findings,
    so a failure is never silent. If `gh pr create` isn't callable unattended
    in this sandbox, push the branch and use its compare URL instead.
-6. Open image-request issues for the book's unfilled art slots:
+7. Open image-request issues for the book's unfilled art slots:
    `python3 .github/scripts/open_image_requests.py <book-id> --branch
-   claude/book-<n>-<slug> --repo sunprema/books` (the opener lives in the
+   claude/book-<n>-<slug> --repo <owner>/<books-repo>` (the opener lives in the
    books repo, so the freshly-cut branch has it). One `image-request` issue
    per slot with no file yet, each marked with book/slot/branch so the
    `place-image` Action can later commit the maintainer's art onto *this* PR
@@ -68,7 +124,7 @@ recreating:
    the prompt placeholders (see `.github/AUTOMATION.md` in the books repo).
    Best-effort + idempotent: a clean no-op if the book has no slots, and a
    script error is noted on the issue but never fails the run.
-7. Comment the PR (or compare URL) back on the originating issue. On a
+8. Comment the PR (or compare URL) back on the originating issue. On a
    failure that produced no branch/PR, remove `in-progress` again so the
    request re-enters the queue; on success the label stays and the merged
    PR's `Closes #<n>` closes the issue.
@@ -110,9 +166,14 @@ recurs.
    **Proposed fix (designed, not yet implemented):** point `sources` at
    `sunprema/kit` (tiny; the session installs the plugin from it anyway) and
    have the prompt bootstrap the content repo itself with
-   `git clone --filter=blob:none --sparse https://github.com/sunprema/books`
+   `git clone --filter=blob:none --sparse https://github.com/<owner>/<books-repo>`
    — the same recipe `pull-book`'s `.pull` clone uses locally, making per-run
    transfer a few hundred KB regardless of library size.
+   **If you adopt this, the prompt must `cd` into that bootstrapped clone**
+   before any bookbank tooling runs. With `sources` pointing at the kit, the
+   session's default cwd is the kit checkout, where repo derivation is
+   deliberately refused (it has no `books/` or `catalog.json`) — so the run
+   would stop with a setup hint rather than misfire, but it would still stop.
    **Blocking unknown:** whether the sandbox's git/`gh` token is minted
    per-listed-repo (a `kit`-sourced session couldn't push to `books`) or
    per-GitHub-App-installation (it just works). Resolve empirically: update

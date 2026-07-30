@@ -7,7 +7,7 @@ build session — every re-voice, revision, depth change, or freshness pass has 
 re-fetch the web and hope it lands on the same facts. With the split, prose becomes
 a cheap, repeatable *rendering* of a durable research artifact.
 
-This is a change to the **kit** (`/Volumes/x/kit/bookbank`) — primarily the
+This is a change to the **kit** (this `bookbank/` plugin) — primarily the
 `write-book` skill's procedure, with small additions to `stage-book-build` and
 `validate_book.py`. The BookBank.app needs **no changes for Phase 1**; later
 phases add app affordances that consume the artifact.

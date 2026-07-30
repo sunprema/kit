@@ -1,6 +1,6 @@
 {
   "name": "kit",
-  "description": "Sundar Nambuvel's Claude Code plugin marketplace — BookBank authoring tools and future tools, one plugin per sibling directory.",
+  "description": "A Claude Code plugin marketplace for authoring tools — BookBank books, CourseBank courses, and more, one plugin per sibling directory. Each plugin publishes to your own repo; nothing is tied to one account.",
   "owner": {
     "name": "Sundar Nambuvel"
   },
@@ -8,7 +8,7 @@
     {
       "name": "bookbank",
       "source": "./bookbank",
-      "description": "Skills and tools for authoring BookBank books: research-and-write a topic into a self-contained HTML book, publish to the public library, and turn a GitHub Issue into a generated book."
+      "description": "Skills and tools for authoring BookBank books: research-and-write a topic into a self-contained HTML book, publish to your own GitHub Pages library, and turn a GitHub Issue into a generated book."
     },
     {
       "name": "coursebank",

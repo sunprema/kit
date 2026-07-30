@@ -30,9 +30,11 @@ Usage:
            Books not listed but already present in <out>/books are KEPT and
            still appear on the shelf, so incremental publishing is additive.
 
-The public repo (`owner/name`) and the live GitHub Pages URL are configurable
-so this can target a fork or a different Pages layout:
-  --repo       or $BOOKBANK_BOOKS_REPO   (default: sunprema/books)
+Your library's repo (`owner/name`) resolves as --repo, else
+$BOOKBANK_BOOKS_REPO, else the `origin` remote of --out (then --root) — so a run
+inside a clone of your books repo needs no config, and there is no baked-in
+default that could publish into somebody else's library:
+  --repo       or $BOOKBANK_BOOKS_REPO   (else derived from the git origin)
   --base-url   or $BOOKBANK_SITE_URL     (default: derived from --repo as
                https://<owner>.github.io/<name>)
 """
@@ -41,6 +43,7 @@ import hashlib
 import html
 import json
 import os
+import re
 import shutil
 import struct
 import subprocess
@@ -51,9 +54,35 @@ from pathlib import Path
 SITE_TITLE = "The BookBank Library"
 SITE_TAGLINE = "Beautiful, web-researched books — one topic at a time."
 
-# Public GitHub repo the library is published to, as "owner/name". Override
-# with --repo or $BOOKBANK_BOOKS_REPO to target a fork or a different account.
-DEFAULT_REPO = "sunprema/books"
+# The GitHub repo a library publishes to, as "owner/name", comes from --repo or
+# $BOOKBANK_BOOKS_REPO. Deliberately no default: every installation publishes to
+# its own library, and a missing config must fail loudly rather than quietly
+# aim at whichever repo happened to be baked in here.
+
+
+def repo_from_remote(*dirs):
+    """Derive "owner/name" from the git `origin` remote of the first of `dirs`
+    that has one. This is what makes headless callers (a cloud routine, a CI
+    job) zero-config: the session already has the books repo checked out, and
+    the clone you are standing in is definitionally your library — so there is
+    nothing to configure and still no way to aim at somebody else's repo.
+    Only github.com remotes resolve; anything else returns None."""
+    for d in dirs:
+        if not d or not Path(d).is_dir():
+            continue
+        try:
+            url = subprocess.run(["git", "remote", "get-url", "origin"], cwd=str(d),
+                                 capture_output=True, text=True, timeout=3).stdout.strip()
+        except Exception:
+            continue
+        if not url:
+            continue
+        # git@github.com:owner/name(.git) | https://github.com/owner/name(.git)
+        m = re.match(r"(?:git@github\.com:|(?:https?://|ssh://git@)github\.com/)"
+                     r"([^/]+)/(.+?)(?:\.git)?/?$", url)
+        if m:
+            return f"{m.group(1)}/{m.group(2)}"
+    return None
 
 
 def default_site_url(repo):
@@ -64,20 +93,24 @@ def default_site_url(repo):
 
 def default_root():
     """$BOOKBANK_ROOT, else cwd if it looks like a content-repo clone (has
-    books/, catalog.json, or a sunprema/books-ish git remote), else ~/bookbank."""
+    books/, catalog.json, or a git remote matching $BOOKBANK_BOOKS_REPO),
+    else ~/bookbank."""
     if os.environ.get("BOOKBANK_ROOT"):
         return os.environ["BOOKBANK_ROOT"]
     cwd = Path.cwd()
-    repo_hint = os.environ.get("BOOKBANK_BOOKS_REPO", DEFAULT_REPO)
     if (cwd / "books").is_dir() or (cwd / "catalog.json").is_file():
         return str(cwd)
-    try:
-        remotes = subprocess.run(["git", "remote", "-v"], cwd=cwd,
-                                  capture_output=True, text=True, timeout=3).stdout
-        if repo_hint in remotes:
-            return str(cwd)
-    except Exception:
-        pass
+    # The remote check only fires when the user has told us their repo — the
+    # two structural signals above are what make this work with no config.
+    repo_hint = os.environ.get("BOOKBANK_BOOKS_REPO")
+    if repo_hint:
+        try:
+            remotes = subprocess.run(["git", "remote", "-v"], cwd=cwd,
+                                      capture_output=True, text=True, timeout=3).stdout
+            if repo_hint in remotes:
+                return str(cwd)
+        except Exception:
+            pass
     return str(Path.home() / "bookbank")
 
 # Curated gradient pairs; a book with no cover art gets one deterministically by
@@ -107,7 +140,7 @@ def personas(root: Path) -> dict:
     """Persona id -> {name, tagline, voice}, resolved via the same 3-tier
     cascade as write-book: plugin defaults, then a per-user override, then a
     per-clone override (each layer's ids win over the previous). A plain
-    content-repo clone (the common --root when standing inside sunprema/books)
+    content-repo clone (the common --root when standing inside the books repo)
     has no personas/ dir of its own — without the plugin-defaults and
     per-user tiers here, every persona name/tagline in the catalog goes
     blank (a real regression this caught: 2026-07-10)."""
@@ -417,7 +450,15 @@ def inject_chip(html_text, block):
     if mo:
         i = mo.start()
         return html_text[:i] + block + "\n" + html_text[i:]
-    return html_text + "\n" + block + "\n"  # fallback: no </body> found
+    # Fallback: no </body> found. `</body>` is an optional tag, so this is a
+    # normal path, not a rare edge case. It must stay symmetric with the strip
+    # above: appending "\n" + block would leave a leading newline the strip
+    # never eats, so every republish added one more blank line — pages grew
+    # forever, every book page showed up dirty on every publish, and a CI
+    # "nothing changed → skip the commit" check could never fire. rstrip first
+    # so pages that already accumulated blank lines collapse once and stay
+    # collapsed.
+    return html_text.rstrip("\n") + "\n" + block + "\n"
 
 
 def inject_book_chip(out: Path, book_id: str):
@@ -759,6 +800,7 @@ main{max-width:1180px;margin:0 auto;padding:2.5rem 1.5rem 1rem}
 .dl:hover{color:var(--ink);border-color:var(--accent)}
 .dl.is-busy{color:var(--accent);border-color:var(--accent);cursor:progress}
 .dl.is-done{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.dl.is-failed{color:#b91c1c;border-color:#b91c1c}
 .dl[hidden]{display:none}
 
 .empty{text-align:center;color:var(--muted);padding:3rem 1rem}
@@ -820,7 +862,7 @@ LIBRARY_JS = """// Client-side search + voice filter for the shelf. No dependenc
   function setUI(btn, state, pct) {
     var bytes = +btn.getAttribute('data-bytes');
     var size = bytes > 0 ? ' (' + (bytes / 1048576).toFixed(1) + ' MB)' : '';
-    btn.classList.remove('is-busy', 'is-done');
+    btn.classList.remove('is-busy', 'is-done', 'is-failed');
     if (state === 'busy') {
       btn.classList.add('is-busy');
       btn.textContent = pct + '%';
@@ -828,6 +870,11 @@ LIBRARY_JS = """// Client-side search + voice filter for the shelf. No dependenc
       btn.classList.add('is-done');
       btn.textContent = '✓ Offline';
       btn.title = 'Saved for offline reading — click to remove the download';
+    } else if (state === 'failed') {
+      // Never fail silently back to the idle label: a button that visibly
+      // does nothing on click reads as broken with no way to report it.
+      btn.classList.add('is-failed');
+      btn.textContent = '⚠ Retry';
     } else {
       btn.textContent = '⤓ Offline';
       btn.title = 'Download this book for offline reading' + size;
@@ -881,7 +928,7 @@ LIBRARY_JS = """// Client-side search + voice filter for the shelf. No dependenc
         localStorage.setItem(key, '1');
         setUI(btn, 'done');
       }).catch(function (err) {
-        setUI(btn, 'idle');
+        setUI(btn, 'failed');
         btn.title = 'Download failed (' + err.message + ') — click to retry';
       });
     });
@@ -1064,13 +1111,32 @@ def main():
     ap.add_argument("--root", default=default_root())
     ap.add_argument("--only", default="")
     ap.add_argument("--repo",
-                    default=os.environ.get("BOOKBANK_BOOKS_REPO") or DEFAULT_REPO,
-                    help="Public GitHub repo as owner/name (default: sunprema/books).")
+                    default=os.environ.get("BOOKBANK_BOOKS_REPO"),
+                    help="Your library's GitHub repo as owner/name. Defaults to "
+                         "$BOOKBANK_BOOKS_REPO, else the origin remote of --out.")
     ap.add_argument("--base-url",
                     default=os.environ.get("BOOKBANK_SITE_URL"),
                     help="Absolute site URL for share-preview (OG/Twitter) tags. "
                          "Default: derived from --repo as https://<owner>.github.io/<name>.")
     args = ap.parse_args()
+
+    # --repo → $BOOKBANK_BOOKS_REPO → the origin remote of the clone we're
+    # publishing into (--out, else --root). The last tier is what makes a cloud
+    # routine or CI job zero-config; see repo_from_remote().
+    if not args.repo:
+        args.repo = repo_from_remote(args.out, args.root)
+        if args.repo:
+            print(f"repo: {args.repo} (from the origin remote)")
+    if not args.repo or "/" not in args.repo:
+        sys.exit("build-library.py: need your library's repo as owner/name.\n"
+                 "  Normally this is derived from the origin remote of --out,\n"
+                 "  so a clone of your books repo needs no config at all.\n"
+                 "  No github.com origin was found there, so pass it explicitly:\n"
+                 "    --repo <owner>/<name>\n"
+                 "  or set it once:\n"
+                 "    export BOOKBANK_BOOKS_REPO=<owner>/<name>\n"
+                 "  (that repo is where the published site lives; GitHub Pages\n"
+                 "   serves it from main at root.)")
 
     root = Path(args.root).expanduser()
     out = Path(args.out).expanduser()
@@ -1103,6 +1169,11 @@ def main():
     # Offline manifests: per-book file lists driving the download buttons.
     for e in entries:
         e["offline_bytes"] = write_offline_manifest(out / "books" / e["id"])
+    missing_manifest = [e["id"] for e in entries
+                        if not (out / "books" / e["id"] / "offline.json").is_file()]
+    if missing_manifest:
+        print("  ! no offline.json written for: " + ", ".join(missing_manifest),
+              file=sys.stderr)
 
     (out / "index.html").write_text(render_index(entries), encoding="utf-8")
     (out / "catalog.json").write_text(
@@ -1153,6 +1224,21 @@ def main():
     for e in entries:
         art = "art" if e["cover"] else "gradient"
         print(f"  - {e['id']}  [{art}]  {e['title']}")
+
+    # This generator writes into books/** as well as the front door, and a
+    # caller that commits only the front door ships a site whose shelf
+    # advertises files that were never pushed — the "⤓ Offline" button then
+    # 404s on offline.json, book pages lose the ⌂ Library chip, and shared
+    # links lose their preview card. Spell that out: a partial `git add` is
+    # the one way to break this silently.
+    print("\nGenerated under books/** — these MUST be committed along with "
+          "index.html / catalog.json / assets:")
+    print("  books/*/offline.json          (the ⤓ Offline button fetches this)")
+    print("  books/*/**.html               (⌂ Library chip + share-preview tags)")
+    print("  books/*/assets/img/og-share.jpg")
+    print("Committing the front door alone leaves the shelf pointing at files "
+          "that aren't there. `git add -A`, or see the publish-on-merge "
+          "workflow in the bookbank plugin's docs/.")
 
 
 if __name__ == "__main__":

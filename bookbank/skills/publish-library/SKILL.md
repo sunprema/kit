@@ -1,12 +1,11 @@
 ---
 name: publish-library
-description: Publish BookBank books to a public GitHub Pages library (default sunprema/books, live at sunprema.github.io/books/; configurable via $BOOKBANK_BOOKS_REPO / $BOOKBANK_SITE_URL). Syncs ready books, regenerates the cover-card shelf + catalog from each book.json, commits, pushes, and verifies the URLs are live. Use when the user wants to "publish the library", "publish my books", "push books to GitHub Pages", "put <book> online", "update the public book site", or "share a book publicly". Triggers include "publish-library", "publish the books", "add <book> to the public site".
+description: Publish BookBank books to your own public GitHub Pages library (set $BOOKBANK_BOOKS_REPO; optionally $BOOKBANK_SITE_URL). Syncs ready books, regenerates the cover-card shelf + catalog from each book.json, commits, pushes, and verifies the URLs are live. Use when the user wants to "publish the library", "publish my books", "push books to GitHub Pages", "put <book> online", "update the public book site", or "share a book publicly". Triggers include "publish-library", "publish the books", "add <book> to the public site".
 ---
 
 # publish-library
 
-Publishes BookBank books to a public GitHub Pages repo (default
-**`sunprema/books`**, live at **https://sunprema.github.io/books/**). The books
+Publishes BookBank books to **your own** public GitHub Pages repo. The books
 are already self-contained static HTML — this skill's job is to sync the
 chosen books into the repo, **regenerate** the front page + catalog from every
 `book.json`, push, and confirm it's live. It parallels the global `promo`
@@ -14,21 +13,39 @@ skill but is book-specific and the shelf is generated, never hand-edited.
 
 ## Configuration
 
-Both the target repo and the live URL are configurable — set these before
-running if publishing to a fork or a different account:
+The target repo resolves in three tiers, **first match wins**:
+
+1. `--repo <owner>/<name>` on the command line.
+2. `$BOOKBANK_BOOKS_REPO`.
+3. **The `origin` remote of the clone being published into** (`--out`, else
+   `--root`). A clone of your books repo therefore needs no configuration at
+   all — this is what makes a cloud routine and a CI job work with zero setup.
+
+There is deliberately **no baked-in default**: config can only ever resolve to
+the repo you are actually standing in, so a fresh install can't publish into
+somebody else's library. If none of the three tiers resolve, the generator
+stops with a setup hint rather than guessing.
 
 ```
-export BOOKBANK_BOOKS_REPO="sunprema/books"          # owner/name, default shown
-export BOOKBANK_SITE_URL="https://sunprema.github.io/books"  # default: derived
-                                                                # from the repo
+export BOOKBANK_BOOKS_REPO="<owner>/<name>"   # only if not inside the clone
+export BOOKBANK_SITE_URL="https://books.example.com"   # only for a custom
+                          # domain; default https://<owner>.github.io/<name>
 ```
 
-`build-library.py` reads both directly. The rest of this doc uses `$REPO` /
-`$BASE` for these two values — resolve them once at the start of a run:
+The repo must exist, be public, and have Pages serving `main` at root
+(`gh repo create <owner>/books --public`, then Settings → Pages → main / root).
+
+`build-library.py` resolves all of this itself. The rest of this doc uses
+`$REPO` / `$BASE`; resolve them once at the start of a run with the shared
+helper, which applies the same order and exits 2 with a hint if nothing
+resolves:
 ```
-REPO="${BOOKBANK_BOOKS_REPO:-sunprema/books}"
+REPO="$("$CLAUDE_PLUGIN_ROOT/library/resolve-repo.sh")"   # or pass a dir
 BASE="${BOOKBANK_SITE_URL:-https://${REPO%%/*}.github.io/${REPO#*/}}"
 ```
+Derivation only fires from a directory that looks like a books repo (it has
+`books/` or `catalog.json`), so standing in an unrelated project doesn't
+silently make that project the publish target.
 
 - Repo: `https://github.com/$REPO` (public)
 - Live base URL: `$BASE/`
@@ -44,7 +61,8 @@ python3 "$CLAUDE_PLUGIN_ROOT/library/build-library.py" --out <clone-dir> [--root
 ```
 
 - `--out`   a clone of the target repo (required).
-- `--repo`  target repo as `owner/name` (default `$BOOKBANK_BOOKS_REPO` or `sunprema/books`).
+- `--repo`  target repo as `owner/name` (defaults to `$BOOKBANK_BOOKS_REPO`; the
+  script exits with a setup hint if neither is set).
 - `--root`  BookBank data root — same cascade as `write-book`: `$BOOKBANK_ROOT`,
   else cwd if it looks like a content-repo clone, else `~/bookbank`.
 - `--only`  comma-separated book ids to publish. **Omit to publish every book
@@ -74,8 +92,7 @@ Books with real cover art (`cover.png` / `assets/img/cover-art.png` /
    (e.g. `~/bookbank`, the legacy flat layout) — reuse a stable checkout there
    so re-runs `git pull` instead of re-cloning ~90 MB:
    ```
-   REPO="${BOOKBANK_BOOKS_REPO:-sunprema/books}"
-   BASE="${BOOKBANK_SITE_URL:-https://${REPO%%/*}.github.io/${REPO#*/}}"
+   # $REPO / $BASE as resolved in Configuration above.
    if git rev-parse --show-toplevel >/dev/null 2>&1 && git remote -v | grep -q "$REPO"; then
      CLONE="$(git rev-parse --show-toplevel)"   # already the content repo
    else
@@ -97,12 +114,15 @@ Books with real cover art (`cover.png` / `assets/img/cover-art.png` /
 3. **Commit & push `main`.** Pages auto-deploys from `main` at root.
    ```
    cd "$CLONE" && git add -A
-   git -c user.name="Sundar Nambuvel" -c user.email="sunprema.aws@gmail.com" \
-     commit -m "Publish library — <what changed>
+   git commit -m "Publish library — <what changed>
 
-   Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
+   Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
    git push -q origin main
    ```
+   Commit as whoever the user's own git config says they are — never pass
+   `-c user.name`/`-c user.email`. If git complains that identity is unset,
+   tell them to run `git config --global user.email <theirs>`; do not
+   substitute one.
    (Skip the commit if `git status` is clean — nothing changed.)
 
 4. **Verify it's live.** A deploy takes ~30–90s; a 404/stale catalog right after
@@ -119,8 +139,15 @@ Books with real cover art (`cover.png` / `assets/img/cover-art.png` /
    for id in <ids>; do
      c=$(curl -s --retry 3 --retry-all-errors -o /dev/null -w "%{http_code}" "$BASE/books/$id/")
      [ "$c" = 200 ] || echo "FAIL $c $id"
+     # The shelf's "⤓ Offline" button fetches this; a 404 here means the
+     # button is dead even though the book page itself loads fine.
+     o=$(curl -s --retry 3 --retry-all-errors -o /dev/null -w "%{http_code}" "$BASE/books/$id/offline.json")
+     [ "$o" = 200 ] || echo "FAIL offline.json $o $id"
    done
    ```
+   Both checks matter and they fail independently — a book can serve perfectly
+   while its Offline button 404s, because the manifest lives under `books/**`
+   and the catalog that advertises it does not. See **Offline downloads** below.
 
 5. **Report the live URLs** — the shelf `$BASE/` and the specific book(s)
    `$BASE/books/<id>/`.
@@ -146,6 +173,16 @@ gh api -X POST "repos/$REPO/pages" -f "source[branch]=main" -f "source[path]=/"
   the repo. Change the look by editing the plugin's `library/build-library.py`
   (the `LIBRARY_CSS` / `render_index` parts) and re-running.
 - **Keep `.nojekyll`** — without it Jekyll can drop `assets/`-style folders.
+- **Never commit only the front door.** `build-library.py` writes generated
+  output into `books/**` too — `books/*/offline.json`, the `⌂ Library` chip and
+  share-preview `<meta>` tags injected into every book page, and
+  `books/*/assets/img/og-share.jpg`. `git add -A`, never
+  `git add index.html catalog.json assets`. A partial add still produces a
+  *working-looking* site: the shelf renders an `⤓ Offline` button with the right
+  byte count (it comes from the catalog, computed in memory) while the
+  `offline.json` it fetches was never pushed, so the button 404s. This is
+  exactly how four books shipped with dead Offline buttons — see
+  `docs/publish-on-merge.md`.
 - **Book readers are desktop-first** (fixed-viewport two-page spread); the shelf
   is fully responsive. Fine to publish; just know phones get a tight reader.
 - **Size:** the full library is ~90 MB (books carry their own art). Reusing the

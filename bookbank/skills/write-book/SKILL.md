@@ -67,10 +67,9 @@ those are a guided-mode plan awaiting the author's approval.
 - **Data root — first match wins:**
   1. `$BOOKBANK_ROOT`, if set.
   2. The current directory, if it **looks like a content-repo clone** — it has
-     a `books/` directory, a `catalog.json`, or a git remote whose URL
-     contains `sunprema/books` (or `$BOOKBANK_BOOKS_REPO`, if set). This is
-     what makes "clone the content repo, run the skill" just work with no
-     flags or env vars.
+     a `books/` directory, a `catalog.json`, or (when `$BOOKBANK_BOOKS_REPO` is
+     set) a git remote whose URL contains it. This is what makes "clone your
+     books repo, run the skill" just work with no flags or env vars.
   3. `~/bookbank`, as a legacy fallback (the pre-plugin flat layout).
 - **Books:** one folder per book under `<root>/books/<book-id>/`:
   ```

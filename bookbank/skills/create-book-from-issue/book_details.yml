@@ -74,5 +74,7 @@ body:
     attributes:
       label: Publishing consent
       options:
-        - label: I understand this book may be published publicly (on sunprema.github.io/books) once reviewed.
+        # Installing this template into your own books repo? Name your own site
+        # here — this text is what requesters are consenting to.
+        - label: I understand this book may be published publicly on this repo's GitHub Pages site once reviewed.
           required: true

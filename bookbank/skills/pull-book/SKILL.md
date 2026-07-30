@@ -1,13 +1,13 @@
 ---
 name: pull-book
-description: Pull one or more published BookBank books from the content repo (default sunprema/books) into the local data root, without cloning the whole ~90MB library. Use when the user wants to "pull a book locally", "get <book> into my BookBank app", "sync <book> from the site", or "download just this book". Triggers include "pull-book <id>", "get the http-caching-headers book locally", "sync this book to my app".
+description: Pull one or more published BookBank books from your content repo ($BOOKBANK_BOOKS_REPO) into the local data root, without cloning the whole library. Use when the user wants to "pull a book locally", "get <book> into my BookBank app", "sync <book> from the site", or "download just this book". Triggers include "pull-book <id>", "get the http-caching-headers book locally", "sync this book to my app".
 ---
 
 # pull-book
 
-Publishing (`publish-library`) is one-way — books land on the public
-`sunprema/books` repo, but nothing automatically syncs them back into your
-own local data root (`$BOOKBANK_ROOT`, the folder BookBank.app reads). This
+Publishing (`publish-library`) is one-way — books land on your public books
+repo (`$BOOKBANK_BOOKS_REPO`), but nothing automatically syncs them back into
+your own local data root (`$BOOKBANK_ROOT`, the folder BookBank.app reads). This
 skill is the reverse direction: grab just the book(s) you actually want,
 without a full clone of every other book's art.
 
@@ -26,7 +26,7 @@ across pulls so repeat calls are a cheap `git pull`, not a re-clone, and
 actually listed in the sparse-checkout, never for books you didn't ask for:
 
 ```bash
-REPO="${BOOKBANK_BOOKS_REPO:-sunprema/books}"
+REPO="$("$CLAUDE_PLUGIN_ROOT/library/resolve-repo.sh")"
 PULL="${BOOKBANK_ROOT:-$HOME/bookbank}/.pull"
 if [ -d "$PULL/.git" ]; then
   git -C "$PULL" sparse-checkout add books/<id1> books/<id2> ...
@@ -45,7 +45,10 @@ losing their local copy's link to the shared clone. `add` accumulates.)
 
 1. Resolve root via the usual cascade (`$BOOKBANK_ROOT` → cwd if it looks
    like a content-repo clone → `~/bookbank`) and repo via
-   `$BOOKBANK_BOOKS_REPO` (default `sunprema/books`).
+   `$BOOKBANK_BOOKS_REPO`, else the `origin` remote of the current clone —
+   `library/resolve-repo.sh` does this, and the helper scripts call it for you.
+   If neither resolves it exits 2 with a hint; surface that rather than guessing
+   a repo.
 2. Run the clone/pull-and-sparse-checkout sequence above for every requested
    book id.
 3. For each book id, copy `<root>/.pull/books/<id>` to

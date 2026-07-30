@@ -25,9 +25,9 @@ if not file_path:
 root = os.environ.get("BOOKBANK_ROOT")
 if not root:
     cwd = os.getcwd()
-    repo_hint = os.environ.get("BOOKBANK_BOOKS_REPO", "sunprema/books")
+    repo_hint = os.environ.get("BOOKBANK_BOOKS_REPO")
     looks_like_clone = os.path.isdir(os.path.join(cwd, "books")) or os.path.isfile(os.path.join(cwd, "catalog.json"))
-    if not looks_like_clone:
+    if not looks_like_clone and repo_hint:
         try:
             r = subprocess.run(["git", "remote", "-v"], cwd=cwd, capture_output=True, text=True, timeout=3)
             looks_like_clone = repo_hint in r.stdout

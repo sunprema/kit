@@ -18,7 +18,7 @@
 #
 # Environment (same cascade as the pull-book skill):
 #   BOOKBANK_ROOT        local data root       (default: ~/bookbank)
-#   BOOKBANK_BOOKS_REPO  GitHub owner/repo     (default: sunprema/books)
+#   BOOKBANK_BOOKS_REPO  GitHub owner/repo     (required, no default)
 
 set -euo pipefail
 
@@ -41,7 +41,10 @@ shift
 MSG="${*:-Update $BOOK_ID}"
 
 ROOT="${BOOKBANK_ROOT:-$HOME/bookbank}"
-REPO="${BOOKBANK_BOOKS_REPO:-sunprema/books}"
+# $BOOKBANK_BOOKS_REPO, else the origin remote of the clone we're standing in
+# (so a books-repo checkout needs no config). Exits 2 with a hint if neither
+# resolves — see library/resolve-repo.sh.
+REPO="$("$(dirname "${BASH_SOURCE[0]}")/../../library/resolve-repo.sh")"
 PULL="$ROOT/.pull"
 SRC="$ROOT/books/$BOOK_ID"
 

@@ -107,8 +107,16 @@ window.addEventListener('load', function(){ setTimeout(function(){
   var reported = 0;
   for (var i = 0; i < all.length && reported < 6; i++){
     var el = all[i];
-    if (!el.getClientRects().length) continue;
-    var r = el.getBoundingClientRect();
+    var rects = el.getClientRects();
+    if (!rects.length) continue;
+    // An element that BREAKS across columns has one rect per fragment, and its
+    // bounding box is their union — which spans the whole spread and looks like
+    // an overflow even though every fragment sits neatly in its own column.
+    // Measure the fragment on the current spread, never the union.
+    var r = rects[0];
+    for (var q = 0; q < rects.length; q++){
+      if (rects[q].left < vw && rects[q].right > r.right) r = rects[q];
+    }
     // Multicolumn shifts later columns off-viewport by design; only flag
     // elements on the CURRENT spread (left edge already within the viewport).
     if (r.left < vw && r.right > vw + 2 && !scrollableAncestor(el)){

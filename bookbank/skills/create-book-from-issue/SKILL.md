@@ -19,11 +19,13 @@ book correct (structure, design, image slots, everything in its SKILL.md).
 
 ## Procedure
 
-1. **Resolve repo + root**, same rules as `write-book`: `$BOOKBANK_BOOKS_REPO`
-   (default `sunprema/books`) for the repo; the root cascade
+1. **Resolve repo + root**, same rules as `write-book`: `$BOOKBANK_BOOKS_REPO`,
+   else the `origin` remote of the current clone (so a session standing in the
+   books repo — a cloud routine, or a contributor's checkout — needs no config).
+   If neither resolves and no issue URL was given, stop and ask; the root cascade
    (`$BOOKBANK_ROOT` → cwd if it looks like a content-repo clone → `~/bookbank`)
    for where the book gets written. If given a full issue URL, take the repo
-   from the URL instead of the env default.
+   from the URL instead of the env var.
 
 2. **Fetch the issue:**
    ```

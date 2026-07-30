@@ -43,8 +43,8 @@ progress runtime scores), `2d-concept-animations`, `svg-animations`,
 - **Data root — first match wins:**
   1. `$COURSEBANK_ROOT`, if set.
   2. The current directory, if it looks like a content-repo clone — it has a
-     `courses/` directory, a `catalog.json`, or a git remote whose URL
-     contains `sunprema/courses` (or `$COURSEBANK_COURSES_REPO`, if set).
+     `courses/` directory, a `catalog.json`, or (when
+     `$COURSEBANK_COURSES_REPO` is set) a git remote whose URL contains it.
   3. `~/coursebank`, as a fallback.
 - **Courses:** one folder per course under `<root>/courses/<course-id>/`:
   ```

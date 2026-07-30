@@ -5,9 +5,12 @@ CourseBank). It reuses the factory pattern end to end: request → headless
 generation with craft skills → QA gate → publish to a public gallery. Decisions
 locked 2026-07-27:
 
-- **Plugin lives here** (`kit/coursebank`); **published artifacts will live in
-  `sunprema/courses`** (the "academy" — GitHub Pages portal, the
-  `sunprema/books` analog). Not created yet; see roadmap.
+- **Plugin lives here** (`kit/coursebank`); **published artifacts live in your
+  own courses repo** (`$COURSEBANK_COURSES_REPO` — the "academy": a GitHub
+  Pages portal, the books-repo analog). **No such portal exists yet for any
+  account, including this plugin's author** — the publish half of CourseBank is
+  unbuilt, so today `/write-course` generates locally and that's it. See
+  roadmap.
 - **Courses are generated FROM a source corpus, not from web research alone.**
   A book starts from a topic; a course starts from a repo, a docs export, or a
   policy set, and the syllabus is derived from *that*, with `curriculum.json`
@@ -58,8 +61,9 @@ locked 2026-07-27:
 2. `validate_course.py` + `build-academy.py` (the `build-library.py` analog:
    portal shelf, per-course offline downloads, installable academy) +
    `publish-academy` skill.
-3. Create `sunprema/courses`: issue form (corpus URL, audience, instructor
-   dropdown), `publish-on-merge.yml` pinned to a kit SHA, Pages.
+3. Create your courses repo (`$COURSEBANK_COURSES_REPO`): issue form (corpus
+   URL, audience, instructor dropdown), `publish-on-merge.yml` pinned to a kit
+   SHA, Pages.
 4. `coursebank` cloud routine + `create-course-from-issue` +
    `dispatch-course-issue` skills (clone the bookbank routine skeleton —
    claim via `in-progress` label, branch `claude/course-<n>-<slug>`, draft
