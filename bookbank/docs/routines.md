@@ -51,17 +51,30 @@ the sparse-clone change in *Known issues* below — with `sources` pointed at th
 kit repo, the session's default cwd is the kit checkout, and derivation there is
 (correctly) refused. Make the prompt clone the books repo and `cd` into it.
 
-If you ever do need to pin config explicitly — a fork, or a data root outside
-the clone — commit `.claude/settings.json` to the books repo, which the routine
-picks up because it's in the checkout:
+## `.claude/settings.json` in the books repo — how the plugin gets loaded
+
+The routine's checkout is read for project settings at session start, which is
+the *only* reliable way to get the plugin into the run (the prompt can't
+install it, and the trigger's own `enabled_plugins` field is ignored — see
+above). Commit this to the books repo:
 
 ```json
-{ "env": { "BOOKBANK_BOOKS_REPO": "<owner>/<books>" } }
+{
+  "extraKnownMarketplaces": {
+    "kit": { "source": { "source": "github", "repo": "<owner>/kit" } }
+  },
+  "enabledPlugins": { "bookbank@kit": true }
+}
 ```
 
-The books repo's `.gitignore` currently ignores `.claude/`; narrow it to
-`.claude/settings.local.json` first or the file will never be committed. Nothing
-secret goes there — it's a public repo.
+The same file is where to pin config explicitly if you ever need to — a fork,
+or a data root outside the clone — by adding
+`"env": { "BOOKBANK_BOOKS_REPO": "<owner>/<books>" }`. That's not needed in the
+normal case, since the slug derives from the checkout's `origin`.
+
+A books repo whose `.gitignore` ignores all of `.claude/` must narrow it to
+`.claude/settings.local.json` first, or the file will never be committed.
+Nothing secret goes there — it's a public repo.
 
 ## What it actually is (corrected from an earlier draft of this doc)
 
@@ -82,10 +95,31 @@ recreating:
   `cron_expression` or a `run_once_at` timestamp. This routine is created
   with `enabled: false` and `run_once_at` set to 2031 (i.e. never) — the
   *only* way it ever actually runs is an explicit `RemoteTrigger` `run` call.
-- **No setup-script hook.** The plugin install (`claude plugin marketplace
-  add sunprema/kit && claude plugin install bookbank@kit`) is the first
-  instruction *inside the routine's own prompt*, not a separate environment
-  bootstrap step.
+- **No setup-script hook**, and **installing the plugin from the prompt does
+  not work.** Plugins are resolved when a session *starts*, so a
+  `claude plugin marketplace add … && claude plugin install …` run from
+  inside the prompt installs to disk but never registers the skills into the
+  session already running. The symptom is the routine announcing "the
+  BookBank plugin isn't in the marketplace" and then improvising a book by
+  hand — worse than failing, because it skips the validator, the image-slot
+  contract, and the house design. Declare the plugin in the **checked-out
+  repo's `.claude/settings.json`** instead (see below), and have the prompt
+  verify the skill is available and *stop* if it isn't.
+- **`enabled_plugins` / `extra_marketplaces` on the trigger are not
+  writable.** The schema has both fields, which look like the obvious place
+  for the above. An update carrying `enabled_plugins: ["bookbank@kit"]`
+  returns `HTTP 200`, bumps `updated_at`, and the field still reads back
+  `[]`. It is not a shape problem: a list of plain strings for
+  `extra_marketplaces` fails with `400 unexpected token`, so the payload is
+  parsed and then discarded. `job_config` *is* writable, so
+  `session_context` changes (below) do stick — always read the trigger back
+  after an update rather than trusting the 200.
+- **`session_context.allowed_tools` must include `Skill`.** It is an
+  allowlist, and the original routine's list (`Bash, Read, Write, Edit,
+  Glob, Grep, WebSearch, WebFetch, TodoWrite`) had no way to invoke a slash
+  command at all — so step 1, `/create-book-from-issue <n>`, was unreachable
+  even with the plugin correctly loaded. Add `Task` too if the run should be
+  able to use `stage-book-build`'s per-page subagents.
 - **Creating a routine requires GitHub to be connected** (a GitHub App
   installation on the target repo, done via `/web-setup` or
   `/install-github-app` in Claude Code) — this is a prerequisite for
