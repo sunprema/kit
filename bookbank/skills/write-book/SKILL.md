@@ -104,6 +104,15 @@ those are a guided-mode plan awaiting the author's approval.
   id (see Procedure step 2). A **theme** is the book's **look & feel** (palette, fonts,
   background); `book.json`'s `theme` is the theme **id**, or absent for a
   neutral house look. A theme is **tokens + a mood** — see **Design** below.
+- **`${CLAUDE_PLUGIN_ROOT}` is read-only.** Everything a build writes goes under
+  `<root>/books/<book-id>/`. The plugin tree is read for procedures, defaults
+  and runtimes and is **never written, edited, or copied onto** — a vendored
+  runtime is copied *out of* it by `library/vendor.sh`, which refuses any
+  destination inside it. Depending on how the plugin is installed, that tree is
+  either a shared cache or the kit checkout itself, so a write there silently
+  changes every future book, and in an unattended run the permission prompt it
+  raises has nobody to answer it. If a step seems to call for editing a plugin
+  file, the step has been misread.
 
 ## book.json schema
 
@@ -273,20 +282,27 @@ Rules:
    flourish. (If `theme` is absent, use a neutral, legible house look.)
 7. **Write the pages** (from the research artifact):
    - `assets/book.css` — the full stylesheet (self-contained, no external CDNs).
-     **Append the shared diagram vocabulary** to it — copy the contents of
-     `${CLAUDE_PLUGIN_ROOT}/skills/book-diagrams/assets/diagram-kit.css` in
-     verbatim (it is pure token references, so it inherits the theme). Every
-     book gets it by default; that is what keeps figures consistent library-wide
-     instead of each book inventing its own class names. Books stay
-     self-contained, so it is copied in, never linked.
+     **Append the shared diagram vocabulary** to it, once the file exists:
+     ```bash
+     "$CLAUDE_PLUGIN_ROOT/library/vendor.sh" "<book-dir>" diagram-kit.css
+     ```
+     (It is pure token references, so it inherits the theme. Every book gets it
+     by default; that is what keeps figures consistent library-wide instead of
+     each book inventing its own class names. Books stay self-contained, so it
+     is copied in, never linked — and `vendor.sh` does the append idempotently,
+     so a resumed build never doubles it.)
    - `concepts/NN-slug.html` — one page per concept (`NN` = 01, 02, … in order).
    - `index.html` — the cover + table of contents linking each concept. Give the
      cover hero a **cover-art image slot** (`id` containing "cover", `concept:
      null`) so the library shows real artwork — see Images & diagrams.
-   - `assets/book-progress.js` — vendor the quiet reading-progress runtime from
-     the **`book-progress`** skill (chapters mark themselves read at their last
-     spread; the contents page gets soft read-marks and a resume link) and load
-     it **after `book.js`** on every page. Give every page's `<body>` a
+   - `assets/book-progress.js` — the quiet reading-progress runtime from the
+     **`book-progress`** skill (chapters mark themselves read at their last
+     spread; the contents page gets soft read-marks and a resume link). Vendor
+     it with
+     ```bash
+     "$CLAUDE_PLUGIN_ROOT/library/vendor.sh" "<book-dir>" book-progress.js
+     ```
+     and load it **after `book.js`** on every page. Give every page's `<body>` a
      `data-book="<book-id>"`, and put a hidden `<a class="book-resume" hidden>`
      (plus optional `<span class="book-progress-note">`) in the index's
      cover/TOC area, styled quietly per that skill — soft ink, never the
@@ -828,8 +844,7 @@ inline SVG; a widget is for interaction/animation, not decoration.)
 **Vendor it per book** (books stay self-contained; same rule as three.js):
 
 ```bash
-mkdir -p "<book-dir>/assets/vendor"
-cp "$CLAUDE_PLUGIN_ROOT/widgets/book-widgets.js" "<book-dir>/assets/vendor/"
+"$CLAUDE_PLUGIN_ROOT/library/vendor.sh" "<book-dir>" book-widgets.js
 ```
 
 Load it before the book's own widget definitions, as classic scripts:

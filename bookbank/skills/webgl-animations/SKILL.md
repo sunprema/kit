@@ -44,7 +44,7 @@ it owns the rules so a figure cannot get them wrong. Copy it next to the bundle
 and load it in between:
 
 ```bash
-cp "$CLAUDE_PLUGIN_ROOT/skills/webgl-animations/assets/book-three.js" "<book-dir>/assets/vendor/"
+"$CLAUDE_PLUGIN_ROOT/library/vendor.sh" "<book-dir>" book-three.js
 ```
 ```html
 <script src="../assets/vendor/three.iife.js"></script>

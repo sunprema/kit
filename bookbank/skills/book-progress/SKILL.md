@@ -22,10 +22,15 @@ BookBank book with **zero required interaction**:
 
 ## Install (once per book)
 
-1. Vendor the runtime:
+1. Vendor the runtime — one call, and it knows both paths:
    ```bash
-   cp "$CLAUDE_PLUGIN_ROOT/skills/book-progress/assets/book-progress.js" "<book-dir>/assets/"
+   "$CLAUDE_PLUGIN_ROOT/library/vendor.sh" "<book-dir>" book-progress.js
    ```
+   `assets/book-progress.js` in **this skill is the master copy and is never
+   written to** — not to adapt it to a book, not to fix a book's markup. It is
+   read, copied, and left alone; a change to the runtime is a change to the
+   plugin, made deliberately and shared by every book. (`vendor.sh` refuses any
+   destination under the plugin root, which is the mistake it exists to stop.)
 2. Load it **after `book.js`** on every page (index, concepts, cheatsheet):
    ```html
    <script src="../assets/book.js"></script>
@@ -61,7 +66,10 @@ BookBank book with **zero required interaction**:
    .book-resume:hover{ color:var(--accent); }
    .book-progress-note{ font-size:.72rem; color:var(--ink-soft); }
    ```
-   Adapt the selectors to the book's own TOC markup; keep the weight low.
+   Adapt **these CSS selectors** to the book's own TOC markup; keep the weight
+   low. The adaptation happens in `book.css` only — never by editing the
+   vendored runtime, whose own selectors (`.bb-read`, `.book-resume`,
+   `.book-progress-note`) are the contract the CSS hooks onto.
 
 ## How the runtime learns the reader's position
 

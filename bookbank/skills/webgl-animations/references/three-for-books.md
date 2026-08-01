@@ -25,7 +25,7 @@ owned by `book-three.js`. This file is about what you put *inside* a figure.
 **Vendor the runtime** next to it:
 
 ```bash
-cp "$CLAUDE_PLUGIN_ROOT/skills/webgl-animations/assets/book-three.js" "<book-dir>/assets/vendor/"
+"$CLAUDE_PLUGIN_ROOT/library/vendor.sh" "<book-dir>" book-three.js
 ```
 
 **Load order matters** — three, then the runtime, then your figures:

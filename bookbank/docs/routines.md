@@ -163,6 +163,99 @@ recreating:
    request re-enters the queue; on success the label stays and the merged
    PR's `Closes #<n>` closes the issue.
 
+## `on_disk_skill_files` needs *more* tools than the happy path, not fewer
+
+Found 2026-08-01, from a run that stalled on a permission prompt asking to
+**modify the plugin's own `skills/book-progress/assets/book-progress.js`**.
+
+The spec (`bookbank.pspec.py` v2.0.4) declares `GenerateBook`'s tools for the
+`skill_command` path, where the strict `bookbank-plugin` tool does every file
+write internally. Its degradation branch, `execution_mode="on_disk_skill_files"`,
+makes the model hand-execute `write-book` — authoring `concepts/*.html`,
+`book.css`, `book.json`, vendoring runtimes — with a tool list whose only file
+verb is `read`, and whose only read scope is `<plugin_root>`. `bash` is
+`scripts=`-only, so there is no `cp`. The only blessed path in hand when it
+came time to write was the plugin's own, and that is where the write went.
+
+Two consequences, the second worse than the first:
+
+- **The plugin tree is writable in principle.** Installed from GitHub it is a
+  shared cache; via a `directory` marketplace it is the kit checkout itself.
+  Either way a stray write changes every future book.
+- **An unattended run cannot survive a permission prompt.** `UNATTENDED` says
+  never ask; `GenerateBook` has `on_failure = "abort"` and no `Escalate`. A
+  prompt is not a failure the spec can route — it is a stall. No unwind, no
+  `MarkStarted` undo, and `PushAlert` — declared as the last action on *every*
+  terminal path — never fires. The issue keeps `in-progress` and the queue
+  blocks until a human clears the label.
+
+Three fixes, in order of payoff:
+
+1. **Make refusal deterministic, not interactive** — the books repo's
+   `.claude/settings.json` now carries:
+
+   ```json
+   "permissions": {
+     "allow": ["Read(~/.claude/plugins/**)"],
+     "deny":  ["Edit(~/.claude/plugins/**)"]
+   }
+   ```
+
+   A denial is a tool failure the spec already handles: abort → undo →
+   `PushAlert` → the operator's phone. A prompt is not. The `allow` matters as
+   much as the `deny`: on-disk mode *must* read the plugin, and an unanswerable
+   read prompt strands the run just as dead. Local runs against a `directory`
+   marketplace need the same pair for the kit checkout path, in
+   `.claude/settings.local.json`.
+
+   Two things verified by test-firing `claude -p` in the books clone rather
+   than assumed:
+
+   - **`Write(path)` rules are silently inert** — the CLI says so out loud:
+     *"Permission deny rule … `Write(~/.claude/plugins/**)` is not matched by
+     file permission checks — only `Edit(path)` rules are."* `Edit(...)` covers
+     every file-editing tool, `Write` included. A `deny` list written with
+     `Write(...)` looks protective and stops nothing.
+   - **`allow` entries are ignored in an untrusted workspace** (*"this
+     workspace has not been trusted"*), while `deny` entries still apply. Open
+     the clone interactively once and accept the trust dialog, or set
+     `projects["<clone>"].hasTrustDialogAccepted: true` in `~/.claude.json`.
+2. **Declare the missing write scope and the read-only boundary** on
+   `GenerateBook` — done in spec **v2.0.5**, which also had to add `books_dir`
+   as an input: without it no book-scoped path could even be *expressed* in a
+   Tool declaration.
+   ```python
+   Tool("read",  paths=[..., "<books_dir>/books/**"]),   # resuming re-reads them
+   Tool("write", paths=["<books_dir>/books/**"]),
+   Tool("bash",  scripts=["<plugin_root>/library/vendor.sh", ...]),
+   ```
+   ```python
+   ("plugin_root is READ-ONLY. Never write, edit, append to, or copy onto any "
+    "path under it; a 'vendor' step writes only under "
+    "<books_dir>/books/<book_id>/, via library/vendor.sh", ...)
+   ```
+   Two more v2.0.5 corrections came out of the same read. `UNATTENDED` now says
+   **a permission denial is not an absent mechanism** — the PromptSpec preamble
+   invites substituting an equivalent mechanism when one is unavailable, and a
+   refused write is indistinguishable from a missing binary at the call site, so
+   without that rule a capable runtime routes around the deny with `bash cp` and
+   the whole gate is theatre. And `PushAlert`'s NOTIFY conditions dereference
+   inputs (`build.validator_errors`, `notify.commented`) that are `None` on a
+   gated run; those now read as false rather than undefined.
+3. **`library/vendor.sh`** gives on-disk mode a real mechanism where it
+   previously had to improvise one. `vendor.sh <book-dir> <asset>` knows both
+   ends — the caller names only `book-progress.js`, `book-widgets.js`,
+   `book-three.js`, or `diagram-kit.css` — and refuses any destination under
+   the plugin root or any directory without a `book.json`. All the SKILL.md
+   vendoring steps now call it instead of spelling out a `cp` with a literal
+   `<book-dir>` placeholder.
+
+The general lesson for the next spec revision: `on_disk_skill_files` is written
+as a *degradation* branch, but its tool requirements are strictly **larger**
+than the happy path's — it inherits every file operation the strict plugin tool
+was performing invisibly. A degradation branch that does more work by hand
+needs its own tool list, not the tail of someone else's.
+
 ## Open questions — status after the first real fire (2026-07-11, issue #2)
 
 1. **Resolved: `gh pr create --draft` works unattended.** Fired against a

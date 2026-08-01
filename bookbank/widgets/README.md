@@ -17,9 +17,12 @@ functions that make the subject move — and gets the lifecycle for free:
 ## Vendoring (per book — books stay self-contained)
 
 ```bash
-mkdir -p "<book-dir>/assets/vendor"
-cp "$CLAUDE_PLUGIN_ROOT/widgets/book-widgets.js" "<book-dir>/assets/vendor/"
+"$CLAUDE_PLUGIN_ROOT/library/vendor.sh" "<book-dir>" book-widgets.js
 ```
+
+`book-widgets.js` here is the master copy: read and copied, never written to.
+A fix belongs in the plugin, where every book inherits it — `vendor.sh` refuses
+any destination under the plugin root.
 
 Load order on every page that uses widgets (classic scripts — works from `file://`):
 
