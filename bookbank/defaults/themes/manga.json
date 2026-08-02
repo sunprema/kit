@@ -1,0 +1,37 @@
+{
+  "art" : "Cel-shaded anime illustration: flat color fills with exactly one hard shadow tone, crisp black linework of varying weight, expressive posing and a clear silhouette. Energy comes from screentone dot fields and radiating speed lines, never from soft gradients or photographic lighting. Cool paper-white ground, restrained palette with a single vermilion accent. No lettering, speech bubbles, or sound-effect text baked into the image.",
+  "background" : {
+    "css" : "repeating-linear-gradient(115deg, rgba(18,18,26,.03) 0 2px, transparent 2px 26px), radial-gradient(1100px 620px at 50% -15%, #ffffff 0%, rgba(255,255,255,0) 60%), linear-gradient(180deg, #eeeeec 0%, #e0e0dd 100%)",
+    "kind" : "speedlines",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "-apple-system,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif",
+    "--font-display" : "\"Arial Black\",\"Helvetica Neue\",Impact,\"Segoe UI\",sans-serif",
+    "--font-mono" : "ui-monospace,\"SF Mono\",Menlo,Consolas,monospace"
+  },
+  "id" : "manga",
+  "mood" : "A tankōbon volume open under a desk lamp: cool newsprint paper, true sumi black, and one vermilion ink that behaves like a shout. Signatures to reproduce structurally: (1) every card, figure, and code block is a PANEL — 3px solid --ink border, square corners, and a hard offset shadow (4px 4px 0 var(--ink), no blur) — set tight to its neighbours with a thin paper gutter between them. (2) Chapter openers carry a speed-line burst behind a huge chapter numeral: repeating-linear-gradient hairlines in --ink at low alpha fanning across the top of the leaf, with the numeral set 9–13rem in --font-display, filled --bg and outlined 3px in --ink via -webkit-text-stroke, so it reads as drawn rather than typed. (3) Screentone, never gradients — any tinted area (asides, table stripes, diagram fills) uses a halftone dot field: background-image: radial-gradient(var(--ink) 1px, transparent 1.2px) with background-size: 6px 6px at ~.18 opacity. (4) Emphasis uses bōten, the manga emphasis dot: `em,.key{font-style:normal;-webkit-text-emphasis:filled dot var(--accent);text-emphasis:filled dot var(--accent);-webkit-text-emphasis-position:over right;text-emphasis-position:over right}` — ship the -webkit- pair, WebKit still wants it. The mark grows the line box, so a marked line sits further from its neighbour than an unmarked one: measured at 17px text it jumps 8px at line-height 1.6 and still 4px at 2.0. Spend bōten on STANDALONE terms — headings, aside titles, table cells, a defined term on its own line — and keep it out of flowing body paragraphs, where the jitter lands mid-column and a fixed-height page has no slack to absorb it; if you do set it inline, give that paragraph line-height 2 or more. (5) Aside titles are sound effects — heavy condensed uppercase, rotated -2deg, 2px --bg text-stroke (with paint-order:stroke fill) over a hard --ink shadow — exactly one per aside and never inside the reading column. Body text stays plain sumi black on paper at a generous size: the ink theatrics live in the panels, openers, and asides, and the prose column is left completely calm. Keep the spread left-to-right — this is a translated volume, not a flipped one, and the pager depends on it. The feel: a serious technical volume printed by a manga house.",
+  "name" : "Manga",
+  "tagline" : "Sumi ink on newsprint — panel borders, screentone, one vermilion shout",
+  "tokens" : {
+    "--accent" : "#ff3b1f",
+    "--accent-2" : "#14707d",
+    "--at" : "#14707d",
+    "--bg" : "#f1f1ee",
+    "--bg-2" : "#e5e5e1",
+    "--cm" : "#8b8b93",
+    "--code-bg" : "#ecece8",
+    "--en" : "#2f7a3f",
+    "--fn" : "#7a3ab8",
+    "--ink" : "#12121a",
+    "--ink-soft" : "#5a5a66",
+    "--kw" : "#d92c10",
+    "--lif" : "#d92c10",
+    "--mac" : "#7a3ab8",
+    "--num" : "#b5651d",
+    "--rule" : "#d6d6d0",
+    "--str" : "#2f7a3f",
+    "--ty" : "#14707d"
+  }
+}

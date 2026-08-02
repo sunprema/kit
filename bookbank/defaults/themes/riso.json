@@ -1,4 +1,5 @@
 {
+  "art" : "A risograph screen-print: exactly two flat inks — federal blue and fluorescent pink — on warm off-white stock, halftone dot fields instead of gradients, a deliberate slight misregistration between the two passes, bold simple shapes. Hand-printed and charmingly imperfect.",
   "background" : {
     "css" : "radial-gradient(900px 520px at 50% -10%, #fbf7ec 0%, rgba(251,247,236,0) 60%), linear-gradient(180deg, #efe9d8 0%, #e4ddc8 100%)",
     "kind" : "paper",

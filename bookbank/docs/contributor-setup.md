@@ -145,12 +145,17 @@ resolving.
 | `the-whiteboard-architect` | Boxes, arrows, and trade-offs — systems at scale |
 | `the-performance-engineer` | Measure first — mechanical sympathy and real numbers |
 | `the-pragmatic-cto` | Boring technology, real deadlines — engineering as economics |
+| `the-shonen-sensei` | Training arcs and named techniques — mastery earned one rival at a time |
 
 ### Built-in themes
 
-Each theme is tokens + a mood; the newer ones also demand *structural
-signatures* (spiral spine, scanlines, via-dot corners, …) spelled out in the
-theme's `mood` — reproduce them, they're what make the look.
+Each theme is tokens + a mood + an `art` direction. The `mood` drives the CSS
+skin, and the newer themes also demand *structural signatures* (spiral spine,
+scanlines, via-dot corners, panel borders, …) spelled out there — reproduce
+them, they're what make the look. The `art` string is not CSS: `write-book`
+opens every image-slot prompt with it verbatim, including the cover, so a
+book's generated artwork stays in the same visual world as its skin. A theme
+you add should carry all three.
 
 | id | look |
 |----|------|
@@ -165,3 +170,4 @@ theme's `mood` — reproduce them, they're what make the look.
 | `circuit` | Solder-mask green + copper traces — silkscreen precision |
 | `aurora` | Polar-night gradients and frosted glass — calm and premium |
 | `arcade` | Synthwave cabinet — neon horizon, pixel progress, LEVEL 01 |
+| `manga` | Sumi ink on newsprint — panel borders, screentone, one vermilion shout |

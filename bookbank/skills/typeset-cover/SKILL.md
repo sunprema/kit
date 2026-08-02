@@ -6,7 +6,7 @@ description: Design a book's cover as pure typography in its own theme and rende
 # typeset-cover
 
 Most BookBank themes are **type-led** — `swiss`, `binder`, `blueprint`,
-`phosphor`, `codex`, `circuit` carry their identity in rules, numerals,
+`phosphor`, `codex`, `circuit`, `manga` carry their identity in rules, numerals,
 spacing and one disciplined accent, not in illustration. For those books the
 best cover isn't a picture of the subject; it's the book's own design system,
 set large. This skill composes that cover as HTML in the book's theme and

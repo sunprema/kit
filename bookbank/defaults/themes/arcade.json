@@ -1,4 +1,5 @@
 {
+  "art" : "Synthwave game art: flat vector shapes over a deep violet ground, neon magenta and cyan rim-light, a cyan perspective horizon grid, chunky pixel and 8-bit motifs. High contrast and graphic — no soft photographic lighting, no muddy blends between the two neons.",
   "background" : {
     "css" : "radial-gradient(50% 30% at 50% 100%, rgba(255,62,165,.14), transparent 70%), repeating-linear-gradient(0deg, rgba(53,224,232,.05) 0 1px, transparent 1px 44px), repeating-linear-gradient(90deg, rgba(53,224,232,.05) 0 1px, transparent 1px 44px), linear-gradient(180deg, #1a0b38 0%, #14082b 55%, #200a42 100%)",
     "kind" : "neon-grid",

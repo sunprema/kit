@@ -1,4 +1,5 @@
 {
+  "art" : "An astronomical plate: luminous forms glowing against a near-black indigo field, a single cool blue accent spent sparingly, a faint scatter of stars, vast negative space. Quiet and awe-struck — no busy detail, no bright secondary colors.",
   "background" : {
     "css" : "radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.8), transparent), radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.55), transparent), radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.7), transparent), radial-gradient(1px 1px at 85% 22%, rgba(255,255,255,.5), transparent), radial-gradient(1px 1px at 55% 12%, rgba(200,220,255,.6), transparent), radial-gradient(ellipse at 50% 0%, #131c3a, #0a0e1a 62%)",
     "kind" : "starfield",

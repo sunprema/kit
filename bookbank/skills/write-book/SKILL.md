@@ -103,7 +103,9 @@ those are a guided-mode plan awaiting the author's approval.
   persona for this topic at build time and replace `"auto"` with the chosen
   id (see Procedure step 2). A **theme** is the book's **look & feel** (palette, fonts,
   background); `book.json`'s `theme` is the theme **id**, or absent for a
-  neutral house look. A theme is **tokens + a mood** — see **Design** below.
+  neutral house look. A theme is **tokens + a mood + an `art` direction** — the
+  `mood` governs the CSS skin, the `art` string governs every image prompt the
+  book emits — see **Design** below.
 - **`${CLAUDE_PLUGIN_ROOT}` is read-only.** Everything a build writes goes under
   `<root>/books/<book-id>/`. The plugin tree is read for procedures, defaults
   and runtimes and is **never written, edited, or copied onto** — a vendored
@@ -260,8 +262,8 @@ Rules:
    re-rolling it, and say which persona you picked and why in one line when
    you report. The whole book is one narrator; `"auto"` is resolved once per
    book, never per page or per chapter. **Load the theme** the same way — it
-   governs **look only** (palette, fonts, background). If `theme` is absent,
-   use a neutral house look.
+   governs **look only**: palette, fonts, background, and the `art` direction
+   every image prompt inherits. If `theme` is absent, use a neutral house look.
 3. **Research the web.** Use WebSearch + WebFetch to get the topic _right_: current
    facts, idioms, version-accurate syntax, authoritative sources (official docs,
    reference material). Don't invent APIs or numbers. Prefer primary sources.
@@ -316,7 +318,7 @@ Rules:
    `images[]` (id + prompt + file).
 9. Give the book a `cover.webp` (the gallery uses it; otherwise it falls back to a
    gradient). For a **type-led theme** — `swiss`, `binder`, `blueprint`, `phosphor`,
-   `codex`, `circuit` — the best cover is the book's own design system set large,
+   `codex`, `circuit`, `manga` — the best cover is the book's own design system set large,
    which the **`typeset-cover`** skill composes and renders with no image model and
    no art round-trip. Reach for a cover-art *image slot* instead when the book
    genuinely wants a picture. Then tell the user to press ⌘R / reopen the book to
@@ -674,6 +676,9 @@ column with no clipped or overlapping content, and that Next/Prev now step file-
   `mood` for topic-specific motif and flourish, but stay inside this palette. Keep
   it legible: strong type scale, generous spacing, good contrast. If `theme` is
   absent, define a sensible neutral house `:root {}` yourself in the same shape.
+  The theme's **`art`** field is **not CSS** — it is art direction for generated
+  imagery and belongs in image prompts (see **Images & diagrams**), never in
+  `book.css`.
 - **Rich content blocks:** syntax-highlighted code (highlight inline with simple
   `<span>` classes + CSS — do **not** rely on a CDN), callouts (note / warning /
   key-idea), comparison tables, figures/diagrams (see **Images & diagrams**), and
@@ -737,7 +742,7 @@ Wherever a real/generated image would genuinely help, create an **image slot**:
    ```json
    {
      "id": "ownership-move",
-     "prompt": "A clean, modern editorial illustration: a String value as a labeled box moving along an arrow from variable s1 to s2, with s1 dimmed and crossed out to show it's been invalidated. Warm rust/oxide palette, flat vector style, generous whitespace, no text labels baked in. Target size ~1280×720px, 16:9 landscape; compose for a small on-page figure with the subject centred and safe margins — it is letterboxed into a 16:9 box, so keep nothing important near the edges.",
+     "prompt": "A technical drafting plate: white and cyan line art on deep navy, thin uniform strokes, orthographic or exploded-cutaway construction, dimension lines and leader arrows over a faint grid. A schematic, not a picture — no shading, no dramatic perspective. Subject: a String value as a labeled box moving along an arrow from variable s1 to s2, with s1 dimmed and struck through to show it's been invalidated. Generous whitespace, no text labels baked in. Target size ~1280×720px, 16:9 landscape; compose for a small on-page figure with the subject centred and safe margins — it is letterboxed into a 16:9 box, so keep nothing important near the edges.",
      "file": "assets/img/ownership-move.webp",
      "alt": "Moving a String invalidates the original binding",
      "caption": "A move transfers ownership; the original binding can no longer be used.",
@@ -745,6 +750,14 @@ Wherever a real/generated image would genuinely help, create an **image slot**:
      "aspect": "16:9"
    }
    ```
+   **Open every prompt with the theme's `art` direction.** Copy the resolved
+   theme's `art` string verbatim as the prompt's opening sentences, then the
+   subject, then the size. That is what keeps a book's artwork in the same visual
+   world as its skin — without it a `phosphor` book gets generic stock-editorial
+   art that fights its own CSS. One theme, one art style, across every slot in the
+   book *including the cover*. (If `theme` is absent, choose one art direction for
+   the whole book and reuse it in every slot the same way.)
+
    Write a **standalone, vivid prompt** that another image model can run with no other
    context, and **always end it with a size expectation** — the target pixel dimensions
    + aspect (e.g. *"~1280×720px, 16:9 landscape"*) and a note that the art is letterboxed
@@ -779,8 +792,8 @@ Wherever a real/generated image would genuinely help, create an **image slot**:
        <div class="img-drop-inner">
          <strong>Image needed</strong>
          <p class="img-prompt">
-           A clean, modern editorial illustration: a String value … no text
-           labels baked in.
+           A technical drafting plate: white and cyan line art on deep navy …
+           no text labels baked in.
          </p>
          <button type="button" class="img-copy">Copy prompt</button>
          <p class="img-hint">
@@ -993,7 +1006,9 @@ concept page) — so name it exactly `cover-art` (preferred) and set `"concept":
 null`, `"file": "assets/img/cover-art.webp"`. A themed id also works as long as it
 contains "cover" (e.g. `gpu-zine-cover`), but **never** name a cover slot without
 "cover" in the id or attach it to a concept, or the gallery won't recognize it.
-Emit its placeholder in the `index.html` cover hero like any other slot. (A
+Emit its placeholder in the `index.html` cover hero like any other slot, and open
+its prompt with the theme's `art` direction like any other slot — the cover is the
+first thing the gallery shows, so it is the worst place to drift off-style. (A
 pre-rendered root `cover.webp` (or `.png`) also works and takes precedence; otherwise the
 gallery falls back to a gradient keyed off the book id.)
 

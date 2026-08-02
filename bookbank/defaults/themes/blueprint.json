@@ -1,4 +1,5 @@
 {
+  "art" : "A technical drafting plate: white and cyan line art on deep navy, thin uniform strokes, orthographic or exploded-cutaway construction, dimension lines and leader arrows over a faint grid. A schematic, not a picture — no shading, no dramatic perspective.",
   "background" : {
     "css" : "repeating-linear-gradient(rgba(125,179,213,.13) 0 1px, transparent 1px 40px), repeating-linear-gradient(90deg, rgba(125,179,213,.13) 0 1px, transparent 1px 40px), radial-gradient(circle at 30% 0%, #123049, #0c2233 60%, #081a28)",
     "kind" : "grid",

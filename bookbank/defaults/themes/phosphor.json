@@ -1,4 +1,5 @@
 {
+  "art" : "Green-phosphor CRT imagery: monochrome green forms on near-black, glowing edges and soft bloom, faint horizontal scanlines, vector-graphics or ASCII-adjacent construction. One color only — no full-color art, no photographic texture.",
   "background" : {
     "css" : "repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px), radial-gradient(ellipse at 50% 40%, #0e1a0e 0%, #0a120a 60%, #060b06 100%)",
     "kind" : "crt",

@@ -1,4 +1,5 @@
 {
+  "art" : "An International-style graphic: flat geometric shapes on a white field, black and grays with one Swiss-red accent, strict alignment and generous whitespace. Reductive and rational — a diagrammatic image, no shadows, no gradients, no ornament.",
   "background" : {
     "css" : "linear-gradient(180deg, #ffffff 0%, #f6f6f3 100%)",
     "kind" : "flat",
