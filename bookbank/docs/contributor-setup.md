@@ -146,6 +146,7 @@ resolving.
 | `the-performance-engineer` | Measure first — mechanical sympathy and real numbers |
 | `the-pragmatic-cto` | Boring technology, real deadlines — engineering as economics |
 | `the-shonen-sensei` | Training arcs and named techniques — mastery earned one rival at a time |
+| `professor-spark` | Predict, reveal, practice — learning experiences, not textbook prose |
 
 ### Built-in themes
 
