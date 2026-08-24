@@ -147,6 +147,7 @@ resolving.
 | `the-pragmatic-cto` | Boring technology, real deadlines — engineering as economics |
 | `the-shonen-sensei` | Training arcs and named techniques — mastery earned one rival at a time |
 | `professor-spark` | Predict, reveal, practice — learning experiences, not textbook prose |
+| `thing-explainer` | Big ideas in the ten hundred most-used words — pictures you can see in your head |
 
 ### Built-in themes
 
@@ -172,3 +173,4 @@ you add should carry all three.
 | `aurora` | Polar-night gradients and frosted glass — calm and premium |
 | `arcade` | Synthwave cabinet — neon horizon, pixel progress, LEVEL 01 |
 | `manga` | Sumi ink on newsprint — panel borders, screentone, one vermilion shout |
+| `poster` | Warm labeled line art — leader-line labels, circled numerals, one crayon red |

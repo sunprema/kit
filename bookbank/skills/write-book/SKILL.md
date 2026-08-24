@@ -318,7 +318,7 @@ Rules:
    `images[]` (id + prompt + file).
 9. Give the book a `cover.webp` (the gallery uses it; otherwise it falls back to a
    gradient). For a **type-led theme** — `swiss`, `binder`, `blueprint`, `phosphor`,
-   `codex`, `circuit`, `manga` — the best cover is the book's own design system set large,
+   `codex`, `circuit`, `manga`, `poster` — the best cover is the book's own design system set large,
    which the **`typeset-cover`** skill composes and renders with no image model and
    no art round-trip. Reach for a cover-art *image slot* instead when the book
    genuinely wants a picture. Then tell the user to press ⌘R / reopen the book to

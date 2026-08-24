@@ -1,0 +1,42 @@
+{
+  "art" : "A labeled line drawing from a friendly picture encyclopedia: thin, even, warm-black ink outlines on warm off-white paper, one simple scene built from everyday things — people, toys, rooms, boxes, arrows of motion. Flat and diagrammatic, gentle rounded forms, no shading, no perspective drama. Leader lines may reach out from parts of the scene, but they end in small empty label boxes or dots — no readable text baked into the image; the page supplies its own labels. At most one crayon-red element per drawing, spent on the single thing that matters.",
+  "background" : {
+    "css" : "radial-gradient(1100px 640px at 50% -12%, #e7e0d1 0%, rgba(231,224,209,0) 60%), linear-gradient(180deg, #ddd5c6 0%, #ccc4b2 100%)",
+    "kind" : "paper",
+    "motion" : "none"
+  },
+  "fonts" : {
+    "--font-body" : "-apple-system,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif",
+    "--font-display" : "\"Avenir Next\",\"Trebuchet MS\",\"Segoe UI\",Helvetica,Arial,sans-serif",
+    "--font-mono" : "ui-monospace,\"SF Mono\",Menlo,Consolas,monospace"
+  },
+  "id" : "poster",
+  "mood" : "A big labeled wall poster from a science museum's kids' floor, printed on warm paper: thin, even, warm-black line art, short lowercase labels tied to things by leader lines, and one crayon-red accent for the single most important thing on each page. Friendly and precise at the same time — a drawing that explains, not a drawing that decorates. The one failure this theme cannot survive is looking like a generic clean light theme: if nothing on a spread is labeled, circled, or framed like a plate, the theme has disappeared. Signatures to reproduce structurally: (1) LEADER-LINE LABELS — aside titles and figure captions are set as small lowercase labels (.75–.9rem, --ink-soft, --font-body) physically tied to their subject by a thin leader: a 1.5px solid --ink line 20–36px long ending in a 5px filled --ink dot at the end that touches the thing being labeled. Draw the leader with a ::before border plus a border-radius dot — pure CSS, no images. A label floating near its subject without a line reads as a rendering bug; every label attaches. (2) CIRCLED CALLOUT NUMERALS — chapter numbers, contents rows, and numbered steps use diagram-callout circles: the numeral inside a 2px solid --ink circle, transparent fill, sized generously (contents circles 2.2–2.8rem across, inline step circles 1.4rem) so the stroke never crowds the digit. Never use filled badges or colored chips — the circle is drawn, not printed. (3) PLATE FRAMES — figures, code blocks, and tables are plates: a 1.5px solid --ink frame, softly rounded (6px), generous inner padding on --paper-2 white, a lowercase leader-line caption at the frame's lower-left, and no shadows or fills anywhere. A plate is quieter than a manga panel — thin line, white inside, air around it. (4) THE COVER LABELS ITSELF — the title is set huge in --font-display (clamp to 3.5–6rem, line-height .95) and treated as the poster's subject: two or three leader-line labels point at it from the margins saying plain-word things ('the name of this book', 'big friendly letters', 'the person who wrote it' pointing at the byline). Keep the hero flex:0 0 auto and clamp() the title — a leaf is a fixed-height box and a shrinking flex child silently guillotines the title. Chapter openers echo it: the numeral 8–12rem in --font-display drawn in outline (transparent fill, 2px --ink text-stroke via -webkit-text-stroke) with one small leader-line label attached. (5) DOT-GRID LEAVES — the leaves carry a faint drawing-pad dot grid over the warm paper: background-image: radial-gradient(rgba(90,80,65,.10) 1px, transparent 1.3px) with background-size: 22px 22px, laid on .book-viewport's --paper ground (grid the paper, never the desk). Below .07 alpha the dots vanish; above .14 they compete with the labels. (6) ACCENT DISCIPLINE — exactly one crayon-red (--accent) element per spread: the key term, the arrow that matters, the one number the reader must see. Leader lines, frames, and circles stay --ink; if everything is red, nothing is. Body text is calm warm-black prose at 17–18px on the dot-grid paper — the theme lives in its labels, circles, and plates, never in the reading column. The feel: the friendliest possible poster that still tells you exactly how the thing works.",
+  "name" : "Poster",
+  "tagline" : "Warm labeled line art — leader-line labels, circled numerals, one crayon red",
+  "tokens" : {
+    "--accent" : "#d9482b",
+    "--accent-2" : "#3f7cae",
+    "--at" : "#3f7cae",
+    "--bg" : "#fbf7ee",
+    "--bg-2" : "#f4eee0",
+    "--cm" : "#8f877a",
+    "--code-bg" : "#f3ecdd",
+    "--desk" : "#ddd5c6",
+    "--desk-2" : "#ccc4b2",
+    "--edge" : "#e9e2d2",
+    "--en" : "#3f7d4a",
+    "--fn" : "#7a52b5",
+    "--ink" : "#2e2924",
+    "--ink-soft" : "#756c60",
+    "--kw" : "#c23f22",
+    "--lif" : "#c23f22",
+    "--mac" : "#a1541f",
+    "--num" : "#b06a1d",
+    "--paper" : "#fbf7ee",
+    "--paper-2" : "#ffffff",
+    "--rule" : "#e5ddcb",
+    "--str" : "#3f7d4a",
+    "--ty" : "#3f7cae"
+  }
+}
