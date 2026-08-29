@@ -185,6 +185,7 @@ async function names(page) {
   check(r.length > 1000, 'page text on non-pager book', { length: r.length, head: r.text.slice(0, 80) });
   r = await call(page, 'next_page', {});
   check(!!r.navigating_to || !!r.turned, 'next_page falls through to rel=next', r);
+  if (r.navigating_to) await page.waitForURL(r.navigating_to);   // let the navigation land before the next goto
 
   // ---------------- cover page ----------------
   await page.goto(BASE + 'books/http-caching-headers/');
