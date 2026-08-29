@@ -71,7 +71,8 @@ python3 "$CLAUDE_PLUGIN_ROOT/library/build-library.py" --out <clone-dir> [--root
 
 It writes into `<out>`: `books/<id>/` (each book verbatim), `index.html` (the
 responsive cover-card grid with search + voice filters), `catalog.json`,
-`assets/library.css`, `assets/library.js`, `.nojekyll`, and `README.md` (once).
+`assets/library.css`, `assets/library.js`, `assets/webmcp-book.js` (the WebMCP
+tools every book page loads), `.nojekyll`, and `README.md` (once).
 Books with real cover art (`cover.png` / `assets/img/cover-art.png` /
 `assets/img/cover.png`) show it; the rest get a deterministic gradient cover.
 
